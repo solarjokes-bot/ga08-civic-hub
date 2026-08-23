@@ -31,6 +31,17 @@ deployed** — see [What's real vs. stubbed](#whats-real-vs-stubbed).
 > Claude — they're written against the documented/current CLI syntax,
 > but you should be the first to actually run them and report back if
 > anything's off.
+>
+> **On `package.json` versions:** pinned to floors that are known to be
+> mutually compatible (verified via docs, not via an actual `npm install`
+> in this environment). The npm registry shows newer majors exist for
+> several packages (e.g. Vite 8, ESLint 10, React Router 7, TypeScript
+> 7) as of August 2026, but bumping each to its registry "latest" in
+> isolation — without being able to run `npm install` and test peer
+> compatibility here — risks handing you a set that doesn't actually
+> resolve together. After `npm install`, run `npm outdated` yourself
+> and upgrade deliberately (ideally one major at a time, re-testing) if
+> you want the newest majors.
 
 ```bash
 npm install
