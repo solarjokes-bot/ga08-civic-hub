@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens (Tailwind v4 CSS-first theme — no tailwind.config.js).
+ * Every text/background pair below is chosen to clear WCAG 2.2 AA
+ * (4.5:1 for body text, 3:1 for large text/UI components). Re-verify
+ * with a contrast checker if you change these.
+ */
+@theme {
+  --font-sans:
+    "Atkinson Hyperlegible", "Segoe UI", system-ui, -apple-system, sans-serif;
+
+  /* Primary: civic blue. #0b3d91 on white = ~9.7:1. */
+  --color-primary-50: #eaf0fb;
+  --color-primary-100: #cddbf5;
+  --color-primary-600: #0b3d91;
+  --color-primary-700: #082c68;
+  --color-primary-900: #051b40;
+
+  /* Accent / positive: on-brand green. #1a7a4c on white = ~4.7:1. */
+  --color-accent-600: #1a7a4c;
+  --color-accent-700: #14603b;
+
+  /* Alert / crisis: used sparingly for 988 and urgent notices. */
+  --color-alert-600: #b3261e;
+  --color-alert-700: #8c1e18;
+
+  /* Warning (unofficial-tool disclaimer banner). #7a4a00 on #fff5e0 = ~5.9:1 */
+  --color-warning-bg: #fff5e0;
+  --color-warning-text: #7a4a00;
+
+  --color-ink-900: #16181d;
+  --color-ink-700: #3a3f4b;
+  --color-ink-500: #5c6270;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f4f6fa;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  body {
+    @apply bg-surface text-ink-900 antialiased;
+    font-family: var(--font-sans);
+  }
+
+  /* Visible focus outline everywhere — never remove focus rings. */
+  :focus-visible {
+    outline: 3px solid var(--color-primary-600);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  a {
+    @apply text-primary-600 underline decoration-2 underline-offset-2;
+  }
+  a:hover {
+    @apply text-primary-700;
+  }
+}
+
+@layer utilities {
+  /* Standard "skip to content" link pattern. */
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50;
+    @apply focus:rounded-md focus:bg-primary-600 focus:px-4 focus:py-2 focus:text-white;
+  }
+}
