@@ -15,20 +15,20 @@
     "amplify:generate": "ampx generate outputs"
   },
   "dependencies": {
+    "amazon-connect-chatjs": "^3.0.6",
+    "amazon-connect-streams": "^2.19.2",
     "aws-amplify": "^6.20.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",
-    "zustand": "^5.0.15",
-    "amazon-connect-streams": "^2.19.2",
-    "amazon-connect-chatjs": "^3.0.6"
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@aws-amplify/backend": "^1.24.0",
     "@aws-amplify/backend-cli": "^1.9.0",
     "@eslint/js": "^9.14.0",
-    "@types/node": "^22.9.0",
     "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^22.9.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@typescript-eslint/eslint-plugin": "^8.15.0",
@@ -40,9 +40,16 @@
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",
+    "globals": "^17.11.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "vite": "^5.4.11"
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "core-js": true,
+    "@parcel/watcher": true,
+    "protobufjs": true
   }
 }

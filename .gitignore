@@ -37,3 +37,12 @@ Thumbs.db
 # Logs
 npm-debug.log*
 *.log
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# Local-only dev helper: wraps `npm run dev` with the portable Node.js
+# install used in this sandboxed dev environment (no system Node.js was
+# available). Hardcodes a machine-specific path — not meant to ship;
+# on a normal machine with Node.js on PATH, just run `npm run dev`.
+run-dev.bat
