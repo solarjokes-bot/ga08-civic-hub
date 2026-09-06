@@ -9,12 +9,20 @@ overview of Rep. Austin Scott's committee work and legislation.
 affiliated with Rep. Scott's office. See [`/about`](src/routes/About.tsx)
 and [`/accessibility`](src/routes/Accessibility.tsx) in the app.
 
-## Status: Phase 1 of 6 (scaffold)
+## Status: Phase 2 of 6 (resource directory)
 
-See [Build order](#build-order) below. This commit contains the app
-shell, routing, styling system, and the Amplify Gen 2 backend skeleton
-(auth + a smoke-test data model). **No AWS resources have been
-deployed** — see [What's real vs. stubbed](#whats-real-vs-stubbed).
+See [Build order](#build-order) below. The app now has:
+
+- **Phase 1** — app shell, full-IA routing, WCAG-tuned Tailwind design
+  system, Amplify Gen 2 `auth` + `data` definitions.
+- **Phase 2** — the resource directory: `Resource` / `ResourceCategory` /
+  `GuidedSession` data models, a ~30-entry verified Georgia seed catalog
+  (`src/data/resources.seed.ts`), the faceted `/resources` list, and
+  `/resources/:slug` detail pages. Works fully offline against the seed;
+  reads the live backend when one is deployed.
+
+**No AWS resources have been deployed** — see
+[What's real vs. stubbed](#whats-real-vs-stubbed).
 
 ## Tech stack
 
@@ -26,26 +34,20 @@ deployed** — see [What's real vs. stubbed](#whats-real-vs-stubbed).
 
 ## Local development
 
-> **This scaffold was authored in an environment without Node.js/npm
-> installed**, so none of the commands below have been run yet by
-> Claude — they're written against the documented/current CLI syntax,
-> but you should be the first to actually run them and report back if
-> anything's off.
->
 > **On `package.json` versions:** pinned to floors that are known to be
-> mutually compatible (verified via docs, not via an actual `npm install`
-> in this environment). The npm registry shows newer majors exist for
-> several packages (e.g. Vite 8, ESLint 10, React Router 7, TypeScript
-> 7) as of August 2026, but bumping each to its registry "latest" in
-> isolation — without being able to run `npm install` and test peer
-> compatibility here — risks handing you a set that doesn't actually
-> resolve together. After `npm install`, run `npm outdated` yourself
-> and upgrade deliberately (ideally one major at a time, re-testing) if
-> you want the newest majors.
+> mutually compatible and have been exercised here via a real
+> `npm install` + `tsc` + `eslint` + `vitest` + `vite build`. Newer
+> majors exist for several packages (e.g. Vite 8, ESLint 10, React
+> Router 7, Vitest 5) as of September 2026; Vitest is intentionally held
+> at 3.x because 4.x/5.x require Vite 6+. Run `npm outdated` and upgrade
+> deliberately (one major at a time, re-testing) if you want newer.
 
 ```bash
 npm install
-npm run dev
+npm run dev        # app at http://localhost:5173
+npm test           # Vitest: filter logic + directory a11y/interaction
+npm run typecheck  # tsc -b --noEmit
+npm run lint       # eslint
 ```
 
 The app runs in **offline/demo mode** without a deployed backend (see
@@ -59,6 +61,16 @@ npm run sandbox
 This deploys a personal Amplify sandbox (Cognito + AppSync + DynamoDB
 for the current schema) and writes a real `amplify_outputs.json`.
 Requires AWS credentials configured locally (`aws configure` / SSO).
+Then load the seed catalog into it:
+
+```bash
+npm run sandbox:seed   # runs amplify/seed/seed.ts against the sandbox
+```
+
+Optionally set `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` sandbox
+secrets first (`npx ampx sandbox secret set …`) to have the seed create
+an `admin` Cognito user. The frontend reads the same seed array directly
+when no backend is deployed, so the directory works either way.
 
 ## Deploy (production)
 
@@ -88,8 +100,8 @@ vector-store choice.
 
 ## Build order
 
-1. ✅ **Scaffold** — Vite+React+TS app, Amplify Gen 2 backend skeleton (this commit).
-2. ⬜ **Resource directory** — full data model, seed data, `/resources` list + detail, faceted search. *(Pause for review after this phase.)*
+1. ✅ **Scaffold** — Vite+React+TS app, Amplify Gen 2 backend skeleton.
+2. ✅ **Resource directory** — `Resource`/`ResourceCategory`/`GuidedSession` models, ~30-entry verified Georgia seed catalog, faceted `/resources` list + `/resources/:slug` detail, URL-synced filters. *(Pause for review after this phase.)*
 3. ⬜ **AI Guided Help** — `/guide` wizard, Bedrock triage function, retrieval over the catalog.
 4. ⬜ **Amazon Connect** — Lex bot, contact flows, chat widget, web voice button, setup runbook. *(Pause for review after this phase.)*
 5. ⬜ **Representative section** — seed content, Congress.gov sync, Bedrock plain-language bill summaries, legislation/initiatives pages.
@@ -99,16 +111,18 @@ vector-store choice.
 
 **Real / working now:**
 - App shell, routing for the full information architecture, Tailwind design tokens tuned for WCAG AA contrast, skip link, focus-visible styling, reduced-motion support.
-- Amplify Gen 2 `auth` (Cognito, `admin` group) and `data` (one smoke-test model) definitions — valid code, not yet deployed.
+- **Resource directory** — `/resources` faceted search (category, who-it's-for, channel, language, GA-08 county) with live facet counts, URL-synced shareable filters, `aria-live` result count, mobile filter toggle; `/resources/:slug` detail pages with contact channels, official-site links, related resources, and a "confirm with the agency" trust note.
+- **Seed catalog** — ~30 real Georgia programs in `src/data/resources.seed.ts`, each with a `lastVerified` date; unconfirmed details carry inline `// VERIFY:` notes. The frontend reads this array directly in offline mode and the live `Resource` table when a backend is deployed (`src/lib/resourceCatalog.ts`).
+- Amplify Gen 2 `auth` (Cognito, `admin` group), `data` (`Resource` / `ResourceCategory` / `GuidedSession`, public API-key read + `admin` write), and `amplify/seed/seed.ts` — valid code, **not yet deployed**.
 - Offline-mode detection so the app never silently pretends to be connected to a backend it isn't.
+- Tests: `src/lib/resourceFilters.test.ts` (filter/facet/URL logic) and route tests for `/resources` + `/resources/:slug` including `jest-axe` checks.
 
 **Stubbed (placeholder UI, no backend yet):**
-- `/resources`, `/resources/:slug` — "coming soon" pages; real directory lands Phase 2.
-- `/guide` — placeholder; real Bedrock-powered wizard lands Phase 3.
+- `/guide` — placeholder; real Bedrock-powered wizard lands Phase 3 (the `GuidedSession` model is already defined so it needs no schema change).
 - `/help` — placeholder; real Connect chat/voice lands Phase 4.
 - `/representative`, `/representative/legislation`, `/representative/initiatives` — placeholders; real content + Congress.gov sync lands Phase 5.
 
-**Not started:** everything under `amplify/functions/*` beyond a README each; `amplify/seed/`; `docs/connect-flows/`; Bedrock/Connect/Lex integration of any kind; Amplify Hosting connection; axe/Lighthouse testing.
+**Not started:** everything under `amplify/functions/*` beyond a README each; `Legislator`/`Bill`/`Initiative` models + seed; `docs/connect-flows/`; Bedrock/Connect/Lex integration of any kind; Amplify Hosting connection; Lighthouse pass; i18n runtime library (Phase 2 strings are externalised in `src/i18n/en/`, ready for it).
 
 ## Project structure
 

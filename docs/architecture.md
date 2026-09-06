@@ -65,14 +65,23 @@ flowchart TB
     Hosting -.->|"builds & deploys"| SPA
 ```
 
-## Phase 1 status (this commit)
+## Status (Phases 1–2)
 
 - ✅ Vite + React 18 + TypeScript app shell, React Router, Tailwind v4,
   Zustand wired.
 - ✅ Amplify Gen 2 backend defined (`amplify/backend.ts`) with Cognito
-  auth (`admin` group, no public sign-up) and Amplify Data (a single
-  `SiteStatus` smoke-test model — the full catalog schema lands in
-  Phase 2).
+  auth (`admin` group, no public sign-up) and Amplify Data:
+  `Resource`, `ResourceCategory`, `GuidedSession` — public API-key read,
+  `admin`-group write; `GuidedSession` is create-only from the public
+  client (a visitor can log a triage session but never read one back).
+- ✅ Resource directory (`/resources`, `/resources/:slug`) backed by a
+  ~30-entry verified seed catalog (`src/data/resources.seed.ts`). The
+  data-access layer (`src/lib/resourceCatalog.ts`) reads the live
+  `Resource` table when a backend is deployed and the bundled seed array
+  otherwise, mapping both to one `CivicResource` shape. Filtering and
+  faceting are pure and client-side (`src/lib/resourceFilters.ts`).
+- ✅ `amplify/seed/seed.ts` upserts the catalog + taxonomy + an optional
+  `admin` user into a deployed sandbox (`npm run sandbox:seed`).
 - ✅ `amplify_outputs.json` ships as a labeled placeholder so the app
   runs in "offline/demo mode" without a deployed backend; `src/lib/amplify.ts`
   detects this and degrades gracefully rather than crashing.

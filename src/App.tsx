@@ -9,6 +9,8 @@ import ComingSoon from "@/routes/ComingSoon";
 // Route-level code splitting keeps the initial bundle small for
 // low-bandwidth rural users (perf requirement). Home/About/Accessibility
 // are static and small enough to ship eagerly with the app shell.
+const Resources = lazy(() => import("@/routes/Resources"));
+const ResourceDetail = lazy(() => import("@/routes/ResourceDetail"));
 const NotFound = lazy(() => import("@/routes/NotFound"));
 
 function Loading() {
@@ -30,26 +32,8 @@ export default function App() {
         <Route element={<Layout />}>
           <Route index element={<Home />} />
 
-          <Route
-            path="resources"
-            element={
-              <ComingSoon
-                title="Find a Resource"
-                phase="Phase 2 — in progress"
-                description="The searchable resource directory (with county, category, eligibility, and language filters) is being built next. Check back soon, or use Chat/Call for help right now."
-              />
-            }
-          />
-          <Route
-            path="resources/:slug"
-            element={
-              <ComingSoon
-                title="Resource details"
-                phase="Phase 2 — in progress"
-                description="Individual resource pages are coming with the directory in Phase 2."
-              />
-            }
-          />
+          <Route path="resources" element={<Resources />} />
+          <Route path="resources/:slug" element={<ResourceDetail />} />
           <Route
             path="guide"
             element={
