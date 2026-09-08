@@ -26,11 +26,26 @@ export interface VoiceStartData {
   };
 }
 
-export type StartContactResult =
+export type StartContactFailure = {
+  ok: false;
+  reason: "not_configured" | "start_failed" | "offline";
+};
+export type StartChatResult =
   | { ok: true; channel: "CHAT"; chat: ChatStartData }
+  | StartContactFailure;
+export type StartVoiceResult =
   | { ok: true; channel: "VOICE"; voice: VoiceStartData }
-  | { ok: false; reason: "not_configured" | "start_failed" | "offline" };
+  | StartContactFailure;
+export type StartContactResult = StartChatResult | StartVoiceResult;
 
+export function startSupportContact(
+  channel: "CHAT",
+  opts?: { displayName?: string; topic?: string },
+): Promise<StartChatResult>;
+export function startSupportContact(
+  channel: "VOICE",
+  opts?: { displayName?: string; topic?: string },
+): Promise<StartVoiceResult>;
 export async function startSupportContact(
   channel: "CHAT" | "VOICE",
   opts: { displayName?: string; topic?: string } = {},

@@ -43,6 +43,9 @@ function roleFrom(participantRole: string | undefined): ChatRole {
 export async function createCustomerChatSession(
   data: ChatStartData,
 ): Promise<ChatSessionFacade> {
+  // amazon-connect-chatjs ships a non-module global .d.ts; this import is
+  // only for its side effect (it defines `globalThis.connect`).
+  // @ts-expect-error non-module declaration file
   await import("amazon-connect-chatjs");
   const connect = (globalThis as any).connect;
   if (!connect?.ChatSession) {

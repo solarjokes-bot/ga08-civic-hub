@@ -41,6 +41,10 @@ export default [
         "warn",
         { argsIgnorePattern: "^_" },
       ],
+      // Core ESLint doesn't understand TypeScript function overload
+      // signatures and flags them as redeclarations. tsc already catches
+      // genuine redeclarations, so turn the base rule off for TS files.
+      "no-redeclare": "off",
     },
   },
   {
@@ -59,6 +63,10 @@ export default [
         "warn",
         { argsIgnorePattern: "^_" },
       ],
+      // Core ESLint doesn't understand TypeScript function overload
+      // signatures and flags them as redeclarations. tsc already catches
+      // genuine redeclarations, so turn the base rule off for TS files.
+      "no-redeclare": "off",
     },
   },
 ];

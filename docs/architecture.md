@@ -107,11 +107,13 @@ flowchart TB
   "not connected — dial 2-1-1" state until the env vars are set.
 - ⛔ **Not deployed.** No sandbox or Connect instance has been
   provisioned — see README "Deploy" and `docs/connect-setup.md`.
-- ⚠️ **Phase 4 is code-only-unverified.** The portable Node.js used for
-  Phases 1–3 was removed from the build machine, so `tsc`/`eslint`/
-  `vitest`/`vite build` could not be run and `package-lock.json` is not
-  regenerated. Once Node is back: `npm install && npm test && npm run
-  build` (use `npm install`, not `npm ci`).
+- ✅ **Phase 4 verified locally** — `tsc -b`, `eslint`, `vitest`
+  (59 tests), and `vite build` all clean; `/help` and `/guide`
+  browser-checked. The heavy SDKs stay out of the initial bundle: the
+  entry is ~60 kB gzip, while `amazon-chime-sdk-js` (~302 kB gzip) and
+  `amazon-connect-chatjs` (~78 kB gzip) are separate chunks reached only
+  from the lazy `/help` route, and Chime is only fetched when a call
+  actually starts.
 
 ## Guided triage data flow (Phase 3)
 

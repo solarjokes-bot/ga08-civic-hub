@@ -84,11 +84,9 @@ export const handler: Schema["startSupportContact"]["functionHandler"] = async (
         ContactFlowId: VOICE_FLOW_ID,
         ParticipantDetails: { DisplayName: displayName },
         Attributes: attributes,
-        // Audio-only: don't advertise video/screen-share capabilities.
-        AllowedCapabilities: {
-          Customer: { Video: "DISABLED", ScreenShare: "DISABLED" },
-          Agent: { Video: "DISABLED", ScreenShare: "DISABLED" },
-        },
+        // Audio-only: omitting AllowedCapabilities means neither side is
+        // granted video or screen-share (the SDK's capability enum only
+        // has "SEND"; "not present" == disabled).
       }),
     );
     return {

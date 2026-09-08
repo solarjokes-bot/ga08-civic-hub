@@ -123,7 +123,7 @@ vector-store choice.
 **Stubbed (placeholder UI, no backend yet):**
 - `/representative`, `/representative/legislation`, `/representative/initiatives` — placeholders; real content + Congress.gov sync lands Phase 5.
 - The **live Bedrock/Connect paths** are authored but unexercised — no sandbox and no Connect instance are deployed. `/guide` uses the deterministic offline engine; `/help` shows the "not connected" state. `BEDROCK_MODEL_ID` (`// VERIFY:` in the handlers) must be confirmed against the current Bedrock catalog before deploy.
-- **Phase 4 was written without a working Node.js toolchain** (the portable install used for Phases 1–3 was removed from the machine), so `tsc`/`eslint`/`vitest`/`vite build` were not run for it, and **`package-lock.json` is not regenerated** — `package.json` gained `@aws-sdk/client-connect` + `amazon-chime-sdk-js` and dropped `amazon-connect-streams`. Once Node is reinstalled: `npm install && npm test && npm run build` (use `npm install`, not `npm ci`, so the lockfile updates). Expect "cannot find module" until then for `amazon-connect-chatjs` / `amazon-chime-sdk-js`.
+- The **live Connect paths are unexercised** — no Connect instance is provisioned, so `/help` shows the "not connected" state. Verified in the browser that both the unconfigured state and (with the flags on) the chat/voice launchers render, and that starting a chat with no backend degrades to the 2-1-1 message rather than a broken widget.
 
 **Not started:** `amplify/functions/congress-sync`; `Legislator`/`Bill`/`Initiative` models + seed; Amplify Hosting connection; Lighthouse pass; i18n runtime library (strings are externalised in `src/i18n/en/`, ready for it).
 
