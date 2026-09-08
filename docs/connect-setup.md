@@ -1,6 +1,60 @@
 # Amazon Connect setup runbook (Phase 4)
 
-Status: **code + IaC complete; the instance itself is not provisioned.**
+Status: **LIVE and verified end-to-end** in account `352223710766`,
+`us-east-1`, on 2026-09-08. A real browser chat reached the Lex bot, the
+fulfillment Lambda retrieved from DynamoDB, Bedrock wrote a grounded
+answer naming real catalog resources, and "talk to a person" routed to a
+queue. `StartWebRTCContact` returns a valid Chime meeting + attendee.
+
+## Provisioned resources (this deployment)
+
+| Thing | Id |
+|---|---|
+| Connect instance `ga08-civic-hub` | `9c1c2dce-2cbd-420c-8b3b-012e990f6f64` |
+| Hours `GA08 Staffed Hours` | `ba6123f8-4990-407a-8ad5-6d86e44c4496` |
+| Queue `General Help` | `1173ef72-456e-4bfd-aec6-8053375f3a57` |
+| Queue `Veterans` | `f7a32876-15ea-4734-8822-c62ceb14f535` |
+| Queue `Housing` | `14ec4551-5928-4090-ad9c-9355700fa59d` |
+| Routing profile `GA08 Agents` | `cd92c5b8-66c4-401c-a816-d5d97e283bc8` |
+| Lex bot `GA08SupportBot` / alias `prod` | `3CHIKCQIPT` / `DSAZUSCGT2` |
+| Contact flow | `bd237d4b-d510-4576-a102-388abd83e8f2` |
+| AppSync API id (for table names) | `u2chp54osfhvfjoarrlk63kchy` |
+
+These live in a gitignored `.env`; source it before deploying:
+`set -a; source .env; set +a; npx ampx sandbox`
+
+## Gotchas found while doing this for real
+
+Things the docs don't warn you about, all of which cost a deploy cycle:
+
+- **`ampx sandbox seed` is unusable here.** `@aws-amplify/seed@1.1.3` pins
+  `aws-amplify` to exactly `6.14.4`; this app runs `6.20.x`, and
+  `@aws-amplify/core` dropped the `getId` export in between, so the seed
+  runtime dies with a `SyntaxError`. `amplify/seed/seed.ts` now writes to
+  DynamoDB directly (`npx tsx amplify/seed/seed.ts` with the two
+  `*_TABLE_NAME` vars). That also sidesteps needing an admin Cognito user
+  just to load rows.
+- **Lex in a flow is `ConnectParticipantWithLexBot`, not
+  `GetParticipantInput`.** The latter rejects a `LexV2Bot` parameter and
+  demands `StoreInput`.
+- **`Compare` blocks need a `NoMatchingCondition` error handler**, not
+  `NoMatchingError`.
+- **Keep flow prompt text ASCII-only.** An em-dash uploaded via
+  `--content file://` came back as `â€"` in the live transcript (and would
+  be read aloud by TTS on voice contacts).
+- **Amplify table names use the AppSync *API id*, which is NOT the
+  hostname** in `amplify_outputs.json`. Resolve it with
+  `aws appsync list-graphql-apis` and match on `uris.GRAPHQL`.
+- **Functions that are data resolvers must set
+  `resourceGroupName: "data"`** in `defineFunction`, or CloudFormation
+  fails with a circular dependency between the data and function nested
+  stacks.
+
+---
+
+## Original runbook (for a fresh instance)
+
+Status if you're starting from scratch: **code + IaC complete.**
 Amazon Connect instance creation, Lex bot import, and contact-flow
 authoring need console/CLI steps that aren't expressible as Amplify Gen 2
 IaC, so they live here. The version-controlled parts are:

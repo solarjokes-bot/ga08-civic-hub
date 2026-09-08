@@ -1,6 +1,23 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { chatMode, voiceOffered } from "@/lib/connect/config";
 
+/**
+ * Vite loads the developer's `.env` into import.meta.env during tests, so a
+ * real deployment's flags would otherwise leak in and flip these assertions.
+ * Pin every var this module reads to empty first; each test then opts in to
+ * exactly the ones it cares about.
+ */
+const VARS = [
+  "VITE_CONNECT_CHAT_ENABLED",
+  "VITE_CONNECT_VOICE_ENABLED",
+  "VITE_CONNECT_USE_HOSTED_WIDGET",
+  "VITE_CONNECT_HOSTED_WIDGET_SNIPPET_ID",
+  "VITE_CONNECT_HOSTED_WIDGET_URL",
+];
+
+beforeEach(() => {
+  for (const v of VARS) vi.stubEnv(v, "");
+});
 afterEach(() => vi.unstubAllEnvs());
 
 describe("chatMode", () => {

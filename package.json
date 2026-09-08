@@ -14,7 +14,7 @@
     "test:watch": "vitest",
     "sandbox": "ampx sandbox",
     "sandbox:once": "ampx sandbox --once",
-    "sandbox:seed": "ampx sandbox seed",
+    "sandbox:seed": "tsx amplify/seed/seed.ts",
     "amplify:generate": "ampx generate outputs"
   },
   "dependencies": {

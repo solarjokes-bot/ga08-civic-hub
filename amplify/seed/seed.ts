@@ -1,120 +1,137 @@
-import { readFile } from "node:fs/promises";
-import { Amplify } from "aws-amplify";
-import { generateClient } from "aws-amplify/data";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
-  createAndSignUpUser,
-  addToUserGroup,
-  getSecret,
-} from "@aws-amplify/seed";
-import type { Schema } from "../data/resource";
+  DynamoDBDocumentClient,
+  BatchWriteCommand,
+  type BatchWriteCommandInput,
+} from "@aws-sdk/lib-dynamodb";
 import { RESOURCE_SEED } from "../../src/data/resources.seed";
 import { CATEGORY_META } from "../../src/lib/categories";
 
 /**
- * Sandbox seed script — Amplify Gen 2.
- * Verified against https://docs.amplify.aws/react/deploy-and-host/sandbox-environments/seed/
- * on 2026-09-06 (@aws-amplify/backend-cli ~1.9). Run with:
+ * Seeds the deployed catalog tables.
  *
- *     npx ampx sandbox seed
+ * Run with:
+ *   npm run seed
+ * (see package.json — it resolves the table names first, then runs this.)
  *
- * // LIVE SETUP: this only does anything against a DEPLOYED sandbox — it
- * reads the generated amplify_outputs.json and talks to the real AppSync
- * endpoint. It is a no-op path in offline/demo mode (there is no backend
- * to write to). The frontend reads the SAME RESOURCE_SEED array directly
- * when offline, so the directory works either way.
+ * WHY NOT `ampx sandbox seed`?
+ * `@aws-amplify/seed@1.1.3` pins `aws-amplify` to exactly 6.14.4, while this
+ * app runs 6.20.x. `@aws-amplify/core` dropped the `getId` export in between,
+ * so the seed runtime dies with:
+ *   SyntaxError: The requested module '@aws-amplify/core' does not provide
+ *   an export named 'getId'
+ * Downgrading the app's runtime Amplify to satisfy a dev-only seeding tool
+ * would be the wrong trade, so this writes to DynamoDB directly instead.
+ * That also avoids needing an admin Cognito user just to load seed rows —
+ * the Resource/ResourceCategory models are admin-write via AppSync, but this
+ * script runs with your own AWS credentials against the table itself.
  *
- * WHAT IT SEEDS
- *  - ResourceCategory: taxonomy rows, from src/lib/categories.ts.
- *  - Resource: the ~30-row civic catalog, from src/data/resources.seed.ts
- *    (the single source of truth — see that file's header for sourcing
- *    rules and `// VERIFY:` notes).
- *  - One `admin` Cognito user, so there's an account that can edit
- *    catalog content and review GuidedSession analytics. Credentials come
- *    from sandbox secrets, never hardcoded:
- *        npx ampx sandbox secret set SEED_ADMIN_EMAIL
- *        npx ampx sandbox secret set SEED_ADMIN_PASSWORD
+ * TABLE NAMES are passed in as env vars rather than guessed. Amplify names
+ * tables `<Model>-<appsyncApiId>-NONE`, and the API id is NOT the hostname in
+ * amplify_outputs.json, so it can't be derived from that file. Get them with:
+ *
+ *   API_ID=$(aws appsync list-graphql-apis \
+ *     --query "graphqlApis[?uris.GRAPHQL=='<data.url from amplify_outputs.json>'].apiId | [0]" \
+ *     --output text)
+ *   export RESOURCE_TABLE_NAME="Resource-$API_ID-NONE"
+ *   export RESOURCE_CATEGORY_TABLE_NAME="ResourceCategory-$API_ID-NONE"
+ *
+ * ADMIN USER (optional, for the /admin write path) — not handled here:
+ *   aws cognito-idp admin-create-user --user-pool-id <auth.user_pool_id> \
+ *     --username <email> --user-attributes Name=email,Value=<email> Name=email_verified,Value=true
+ *   aws cognito-idp admin-add-user-to-group --user-pool-id <id> \
+ *     --username <email> --group-name admin
  */
 
-const outputsUrl = new URL("../../amplify_outputs.json", import.meta.url);
-const outputs = JSON.parse(await readFile(outputsUrl, { encoding: "utf8" }));
-Amplify.configure(outputs);
+const REGION = process.env.AWS_REGION ?? "us-east-1";
+const RESOURCE_TABLE = requireEnv("RESOURCE_TABLE_NAME");
+const CATEGORY_TABLE = requireEnv("RESOURCE_CATEGORY_TABLE_NAME");
 
-const client = generateClient<Schema>();
-
-async function seedCategories() {
-  let created = 0;
-  for (const meta of Object.values(CATEGORY_META)) {
-    const { errors } = await client.models.ResourceCategory.create({
-      key: meta.category,
-      label: meta.label,
-      description: meta.description,
-      icon: meta.icon,
-      featuredOnHome: meta.featuredOnHome,
-    });
-    if (errors?.length) {
-      console.error(`  category ${meta.category}:`, errors);
-    } else {
-      created += 1;
-    }
-  }
-  console.log(`Seeded ${created}/${Object.keys(CATEGORY_META).length} categories.`);
-}
-
-async function seedResources() {
-  let created = 0;
-  for (const r of RESOURCE_SEED) {
-    const { errors } = await client.models.Resource.create({
-      slug: r.slug,
-      name: r.name,
-      summary: r.summary,
-      description: r.description,
-      category: r.category,
-      level: r.level,
-      agency: r.agency,
-      eligibilitySummary: r.eligibilitySummary,
-      eligibilityTags: r.eligibilityTags,
-      counties: r.counties,
-      channels: r.channels,
-      phone: r.phone,
-      url: r.url,
-      applicationUrl: r.applicationUrl,
-      languages: r.languages,
-      lastVerified: r.lastVerified,
-      keywords: r.keywords,
-    });
-    if (errors?.length) {
-      console.error(`  resource ${r.slug}:`, errors);
-    } else {
-      created += 1;
-    }
-  }
-  console.log(`Seeded ${created}/${RESOURCE_SEED.length} resources.`);
-}
-
-async function seedAdminUser() {
-  let email: string;
-  let password: string;
-  try {
-    email = await getSecret("SEED_ADMIN_EMAIL");
-    password = await getSecret("SEED_ADMIN_PASSWORD");
-  } catch {
-    console.warn(
-      "Skipping admin user: set SEED_ADMIN_EMAIL / SEED_ADMIN_PASSWORD sandbox secrets to create one.",
+function requireEnv(name: string): string {
+  const v = process.env[name];
+  if (!v) {
+    console.error(
+      `Missing ${name}. See the header of amplify/seed/seed.ts for how to resolve table names.`,
     );
-    return;
+    process.exit(1);
   }
-  // @aws-amplify/seed ~1.1 (2026-09): the sign-up flow is tagged.
-  const user = await createAndSignUpUser({
-    username: email,
-    password,
-    signInFlow: "Password",
-    signInAfterCreation: false,
-  });
-  await addToUserGroup(user, "admin");
-  console.log(`Created admin user ${email} and added to 'admin' group.`);
+  return v;
 }
 
-await seedCategories();
-await seedResources();
-await seedAdminUser();
-console.log("Seed complete.");
+const doc = DynamoDBDocumentClient.from(new DynamoDBClient({ region: REGION }));
+const now = new Date().toISOString();
+
+/** DynamoDB BatchWrite caps at 25 items per request. */
+async function batchPut(
+  table: string,
+  items: Record<string, unknown>[],
+): Promise<number> {
+  let written = 0;
+  for (let i = 0; i < items.length; i += 25) {
+    const chunk = items.slice(i, i + 25);
+    // Typed as the SDK's RequestItems so the UnprocessedItems handed back on
+    // the retry path (WriteRequest[], with optional Put/DeleteRequest) is
+    // assignable — a bare object literal infers too narrowly here.
+    let unprocessed: NonNullable<BatchWriteCommandInput["RequestItems"]> = {
+      [table]: chunk.map((Item) => ({ PutRequest: { Item } })),
+    };
+    // Retry whatever DynamoDB throttles back to us.
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const res = await doc.send(
+        new BatchWriteCommand({ RequestItems: unprocessed }),
+      );
+      const left = res.UnprocessedItems?.[table] ?? [];
+      written += (unprocessed[table]?.length ?? 0) - left.length;
+      if (left.length === 0) break;
+      unprocessed = { [table]: left };
+      await new Promise((r) => setTimeout(r, 200 * 2 ** attempt));
+    }
+  }
+  return written;
+}
+
+async function main() {
+  const categories = Object.values(CATEGORY_META).map((meta) => ({
+    key: meta.category,
+    label: meta.label,
+    description: meta.description,
+    icon: meta.icon,
+    featuredOnHome: meta.featuredOnHome,
+    __typename: "ResourceCategory",
+    createdAt: now,
+    updatedAt: now,
+  }));
+
+  const resources = RESOURCE_SEED.map((r) => ({
+    slug: r.slug,
+    name: r.name,
+    summary: r.summary,
+    description: r.description,
+    category: r.category,
+    level: r.level,
+    agency: r.agency,
+    eligibilitySummary: r.eligibilitySummary,
+    eligibilityTags: r.eligibilityTags,
+    counties: r.counties,
+    channels: r.channels,
+    ...(r.phone ? { phone: r.phone } : {}),
+    url: r.url,
+    ...(r.applicationUrl ? { applicationUrl: r.applicationUrl } : {}),
+    languages: r.languages,
+    lastVerified: r.lastVerified,
+    keywords: r.keywords,
+    __typename: "Resource",
+    createdAt: now,
+    updatedAt: now,
+  }));
+
+  const c = await batchPut(CATEGORY_TABLE, categories);
+  console.log(`Seeded ${c}/${categories.length} categories -> ${CATEGORY_TABLE}`);
+  const n = await batchPut(RESOURCE_TABLE, resources);
+  console.log(`Seeded ${n}/${resources.length} resources  -> ${RESOURCE_TABLE}`);
+}
+
+main().catch((err) => {
+  console.error("Seed failed:", err);
+  process.exit(1);
+});

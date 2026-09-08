@@ -1,9 +1,9 @@
 {
   "_comment": [
-    "GA-08 Civic Resource Hub — inbound contact flow (chat + WebRTC voice).",
+    "GA-08 Civic Resource Hub - inbound contact flow (chat + WebRTC voice).",
     "Import via Connect console: Routing -> Flows -> Create flow -> Import flow.",
     "After import you MUST fix three kinds of reference the export cannot carry:",
-    "  1. GetParticipantInput.Parameters.LexV2Bot.AliasArn  -> your GA08SupportBot alias ARN",
+    "  1. ConnectParticipantWithLexBot.Parameters.LexV2Bot.AliasArn -> your GA08SupportBot alias ARN",
     "  2. UpdateContactTargetQueue.Parameters.QueueId (x3)   -> your General Help / Veterans / Housing queue ARNs",
     "  3. CheckHoursOfOperation.Parameters.HoursOfOperationId -> your 'GA08 Staffed Hours' id",
     "See docs/connect-setup.md steps 5-6.",
@@ -12,7 +12,10 @@
   "Version": "2019-10-30",
   "StartAction": "a01-set-logging",
   "Metadata": {
-    "entryPointPosition": { "x": 20, "y": 20 },
+    "entryPointPosition": {
+      "x": 20,
+      "y": 20
+    },
     "name": "GA08 Civic Hub - Inbound (chat + web voice)",
     "description": "Greet, run the Lex bot (Bedrock-backed), offer a human hand-off routed by topic.",
     "type": "contactFlow",
@@ -22,50 +25,89 @@
     {
       "Identifier": "a01-set-logging",
       "Type": "UpdateFlowLoggingBehavior",
-      "Parameters": { "FlowLoggingBehavior": "Enabled" },
-      "Transitions": { "NextAction": "a02-init-attrs" }
+      "Parameters": {
+        "FlowLoggingBehavior": "Enabled"
+      },
+      "Transitions": {
+        "NextAction": "a02-init-attrs"
+      }
     },
     {
       "Identifier": "a02-init-attrs",
       "Type": "UpdateContactAttributes",
       "Parameters": {
-        "Attributes": { "app": "ga08-civic-resource-hub", "handoff": "false" }
+        "Attributes": {
+          "app": "ga08-civic-resource-hub",
+          "handoff": "false"
+        }
       },
       "Transitions": {
         "NextAction": "a03-check-hours",
-        "Errors": [{ "NextAction": "a03-check-hours", "ErrorType": "NoMatchingError" }]
+        "Errors": [
+          {
+            "NextAction": "a03-check-hours",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
       }
     },
     {
       "Identifier": "a03-check-hours",
       "Type": "CheckHoursOfOperation",
-      "Parameters": { "HoursOfOperationId": "REPLACE_WITH_HOURS_OF_OPERATION_ID" },
+      "Parameters": {
+        "HoursOfOperationId": "REPLACE_WITH_HOURS_OF_OPERATION_ID"
+      },
       "Transitions": {
         "NextAction": "a04-greeting",
         "Conditions": [
-          { "NextAction": "a04-greeting", "Condition": { "Operator": "Equals", "Operands": ["True"] } },
-          { "NextAction": "a20-after-hours", "Condition": { "Operator": "Equals", "Operands": ["False"] } }
+          {
+            "NextAction": "a04-greeting",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "True"
+              ]
+            }
+          },
+          {
+            "NextAction": "a20-after-hours",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "False"
+              ]
+            }
+          }
         ],
-        "Errors": [{ "NextAction": "a04-greeting", "ErrorType": "NoMatchingError" }]
+        "Errors": [
+          {
+            "NextAction": "a04-greeting",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
       }
     },
     {
       "Identifier": "a04-greeting",
       "Type": "MessageParticipant",
       "Parameters": {
-        "Text": "Hi, and welcome to the GA-08 Civic Resource Hub. I can help you find public and government services. Tell me what's going on — for example, help with food, rent, health care, or a job. You can say \"talk to a person\" any time."
+        "Text": "Hi, and welcome to the GA-08 Civic Resource Hub. I can help you find public and government services. Tell me what's going on - for example, help with food, rent, health care, or a job. You can say \"talk to a person\" any time."
       },
       "Transitions": {
         "NextAction": "a05-get-input",
-        "Errors": [{ "NextAction": "a05-get-input", "ErrorType": "NoMatchingError" }]
+        "Errors": [
+          {
+            "NextAction": "a05-get-input",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
       }
     },
     {
       "Identifier": "a05-get-input",
-      "Type": "GetParticipantInput",
+      "Type": "ConnectParticipantWithLexBot",
       "Parameters": {
         "Text": "What do you need help with?",
-        "InputTimeLimitSeconds": "12",
         "LexV2Bot": {
           "AliasArn": "REPLACE_WITH_LEX_BOT_ALIAS_ARN"
         }
@@ -73,95 +115,200 @@
       "Transitions": {
         "NextAction": "a10-check-handoff",
         "Conditions": [
-          { "NextAction": "a06-route-decision", "Condition": { "Operator": "Equals", "Operands": ["TalkToAgent"] } },
-          { "NextAction": "a10-check-handoff", "Condition": { "Operator": "Equals", "Operands": ["FallbackIntent"] } }
+          {
+            "NextAction": "a06-route-decision",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "TalkToAgent"
+              ]
+            }
+          },
+          {
+            "NextAction": "a10-check-handoff",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "FallbackIntent"
+              ]
+            }
+          }
         ],
         "Errors": [
-          { "NextAction": "a10-check-handoff", "ErrorType": "NoMatchingCondition" },
-          { "NextAction": "a10-check-handoff", "ErrorType": "InputTimeLimitExceeded" },
-          { "NextAction": "a10-check-handoff", "ErrorType": "NoMatchingError" }
+          {
+            "NextAction": "a10-check-handoff",
+            "ErrorType": "NoMatchingCondition"
+          },
+          {
+            "NextAction": "a10-check-handoff",
+            "ErrorType": "InputTimeLimitExceeded"
+          },
+          {
+            "NextAction": "a10-check-handoff",
+            "ErrorType": "NoMatchingError"
+          }
         ]
       }
     },
     {
       "Identifier": "a10-check-handoff",
       "Type": "Compare",
-      "Parameters": { "ComparisonValue": "$.Lex.SessionAttributes.handoff" },
+      "Parameters": {
+        "ComparisonValue": "$.Lex.SessionAttributes.handoff"
+      },
       "Transitions": {
         "NextAction": "a11-continue-or-loop",
         "Conditions": [
-          { "NextAction": "a06-route-decision", "Condition": { "Operator": "Equals", "Operands": ["true"] } }
+          {
+            "NextAction": "a06-route-decision",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "true"
+              ]
+            }
+          }
         ],
-        "Errors": [{ "NextAction": "a11-continue-or-loop", "ErrorType": "NoMatchingError" }]
+        "Errors": [
+          {
+            "NextAction": "a11-continue-or-loop",
+            "ErrorType": "NoMatchingCondition"
+          }
+        ]
       }
     },
     {
       "Identifier": "a11-continue-or-loop",
-      "Type": "GetParticipantInput",
+      "Type": "ConnectParticipantWithLexBot",
       "Parameters": {
         "Text": "Is there anything else I can help you find? You can also say \"talk to a person\".",
-        "InputTimeLimitSeconds": "12",
-        "LexV2Bot": { "AliasArn": "REPLACE_WITH_LEX_BOT_ALIAS_ARN" }
+        "LexV2Bot": {
+          "AliasArn": "REPLACE_WITH_LEX_BOT_ALIAS_ARN"
+        }
       },
       "Transitions": {
         "NextAction": "a19-goodbye",
         "Conditions": [
-          { "NextAction": "a06-route-decision", "Condition": { "Operator": "Equals", "Operands": ["TalkToAgent"] } }
+          {
+            "NextAction": "a06-route-decision",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "TalkToAgent"
+              ]
+            }
+          }
         ],
         "Errors": [
-          { "NextAction": "a10-check-handoff", "ErrorType": "NoMatchingCondition" },
-          { "NextAction": "a19-goodbye", "ErrorType": "InputTimeLimitExceeded" },
-          { "NextAction": "a19-goodbye", "ErrorType": "NoMatchingError" }
+          {
+            "NextAction": "a10-check-handoff",
+            "ErrorType": "NoMatchingCondition"
+          },
+          {
+            "NextAction": "a19-goodbye",
+            "ErrorType": "NoMatchingError"
+          }
         ]
       }
     },
     {
       "Identifier": "a06-route-decision",
       "Type": "Compare",
-      "Parameters": { "ComparisonValue": "$.Lex.SessionAttributes.routeToQueue" },
+      "Parameters": {
+        "ComparisonValue": "$.Lex.SessionAttributes.routeToQueue"
+      },
       "Transitions": {
         "NextAction": "a07-queue-general",
         "Conditions": [
-          { "NextAction": "a07-queue-veterans", "Condition": { "Operator": "Equals", "Operands": ["Veterans"] } },
-          { "NextAction": "a07-queue-housing", "Condition": { "Operator": "Equals", "Operands": ["Housing"] } }
+          {
+            "NextAction": "a07-queue-veterans",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "Veterans"
+              ]
+            }
+          },
+          {
+            "NextAction": "a07-queue-housing",
+            "Condition": {
+              "Operator": "Equals",
+              "Operands": [
+                "Housing"
+              ]
+            }
+          }
         ],
-        "Errors": [{ "NextAction": "a07-queue-general", "ErrorType": "NoMatchingError" }]
+        "Errors": [
+          {
+            "NextAction": "a07-queue-general",
+            "ErrorType": "NoMatchingCondition"
+          }
+        ]
       }
     },
     {
       "Identifier": "a07-queue-general",
       "Type": "UpdateContactTargetQueue",
-      "Parameters": { "QueueId": "REPLACE_WITH_GENERAL_HELP_QUEUE_ARN" },
+      "Parameters": {
+        "QueueId": "REPLACE_WITH_GENERAL_HELP_QUEUE_ARN"
+      },
       "Transitions": {
         "NextAction": "a08-transfer",
-        "Errors": [{ "NextAction": "a30-transfer-failed", "ErrorType": "NoMatchingError" }]
+        "Errors": [
+          {
+            "NextAction": "a30-transfer-failed",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
       }
     },
     {
       "Identifier": "a07-queue-veterans",
       "Type": "UpdateContactTargetQueue",
-      "Parameters": { "QueueId": "REPLACE_WITH_VETERANS_QUEUE_ARN" },
+      "Parameters": {
+        "QueueId": "REPLACE_WITH_VETERANS_QUEUE_ARN"
+      },
       "Transitions": {
         "NextAction": "a08-transfer",
-        "Errors": [{ "NextAction": "a30-transfer-failed", "ErrorType": "NoMatchingError" }]
+        "Errors": [
+          {
+            "NextAction": "a30-transfer-failed",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
       }
     },
     {
       "Identifier": "a07-queue-housing",
       "Type": "UpdateContactTargetQueue",
-      "Parameters": { "QueueId": "REPLACE_WITH_HOUSING_QUEUE_ARN" },
+      "Parameters": {
+        "QueueId": "REPLACE_WITH_HOUSING_QUEUE_ARN"
+      },
       "Transitions": {
         "NextAction": "a08-transfer",
-        "Errors": [{ "NextAction": "a30-transfer-failed", "ErrorType": "NoMatchingError" }]
+        "Errors": [
+          {
+            "NextAction": "a30-transfer-failed",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
       }
     },
     {
       "Identifier": "a08-transfer",
       "Type": "MessageParticipant",
-      "Parameters": { "Text": "Okay — connecting you with a person now. Please hold." },
+      "Parameters": {
+        "Text": "Okay - connecting you with a person now. Please hold."
+      },
       "Transitions": {
         "NextAction": "a09-transfer-to-queue",
-        "Errors": [{ "NextAction": "a09-transfer-to-queue", "ErrorType": "NoMatchingError" }]
+        "Errors": [
+          {
+            "NextAction": "a09-transfer-to-queue",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
       }
     },
     {
@@ -171,8 +318,14 @@
       "Transitions": {
         "NextAction": "a30-transfer-failed",
         "Errors": [
-          { "NextAction": "a30-transfer-failed", "ErrorType": "QueueAtCapacity" },
-          { "NextAction": "a30-transfer-failed", "ErrorType": "NoMatchingError" }
+          {
+            "NextAction": "a30-transfer-failed",
+            "ErrorType": "QueueAtCapacity"
+          },
+          {
+            "NextAction": "a30-transfer-failed",
+            "ErrorType": "NoMatchingError"
+          }
         ]
       }
     },
@@ -184,7 +337,12 @@
       },
       "Transitions": {
         "NextAction": "a99-disconnect",
-        "Errors": [{ "NextAction": "a99-disconnect", "ErrorType": "NoMatchingError" }]
+        "Errors": [
+          {
+            "NextAction": "a99-disconnect",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
       }
     },
     {
@@ -195,7 +353,12 @@
       },
       "Transitions": {
         "NextAction": "a99-disconnect",
-        "Errors": [{ "NextAction": "a99-disconnect", "ErrorType": "NoMatchingError" }]
+        "Errors": [
+          {
+            "NextAction": "a99-disconnect",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
       }
     },
     {
@@ -206,7 +369,12 @@
       },
       "Transitions": {
         "NextAction": "a99-disconnect",
-        "Errors": [{ "NextAction": "a99-disconnect", "ErrorType": "NoMatchingError" }]
+        "Errors": [
+          {
+            "NextAction": "a99-disconnect",
+            "ErrorType": "NoMatchingError"
+          }
+        ]
       }
     },
     {
