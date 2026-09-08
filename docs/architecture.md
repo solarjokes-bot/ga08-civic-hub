@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **Phase 1 (scaffold)**. This document describes the target
+Status: **Phase 3 (AI Guided Help)**. This document describes the target
 end-state architecture from the project spec. Components not yet built
 are marked *(planned)*; see [../README.md](../README.md) for the
 authoritative "what's real vs. stubbed" status as of the latest commit.
@@ -23,14 +23,14 @@ flowchart TB
     end
 
     subgraph Functions["Amplify Functions (Lambda)"]
-        Triage["guided-triage\n(planned, Phase 3)"]
+        Triage["guided-triage\n(built, Phase 3 —\nnot yet deployed)"]
         LexFulfill["lex-fulfillment\n(planned, Phase 4)"]
         CongressSync["congress-sync\n(scheduled, planned, Phase 5)"]
     end
 
     subgraph AI["Amazon Bedrock"]
-        Claude["Claude (Bedrock Runtime)\n(planned)"]
-        KB["Retrieval over Resource catalog\n(dev tier: embeddings stored in\nDynamoDB / Aurora pgvector,\nnot OpenSearch Serverless —\nsee cost note below)\n(planned)"]
+        Claude["Claude (Bedrock Runtime,\nConverse API + tool use)"]
+        KB["Dev-tier retrieval:\nlexical scorer over the\nResource table —\nno vector store\n(KNOWLEDGE_BASE_ID hook\nfor a later swap)"]
     end
 
     subgraph Connect["Amazon Connect (planned, Phase 4)"]
@@ -45,10 +45,11 @@ flowchart TB
     SPA -- "GraphQL (API key, public read)" --> AppSync
     SPA -. "admin sign-in" .-> Auth
     AppSync --> DDB
-    SPA -- "invoke" --> Triage
+    SPA -- "guidedTriage query (API key)" --> AppSync
+    AppSync -- "resolver" --> Triage
     Triage --> Claude
     Triage --> KB
-    Triage --> AppSync
+    Triage -- "read Resource table" --> DDB
 
     ChatWidget --> LexBot
     VoiceWidget --> LexBot
@@ -65,7 +66,7 @@ flowchart TB
     Hosting -.->|"builds & deploys"| SPA
 ```
 
-## Status (Phases 1–2)
+## Status (Phases 1–3)
 
 - ✅ Vite + React 18 + TypeScript app shell, React Router, Tailwind v4,
   Zustand wired.
@@ -85,8 +86,53 @@ flowchart TB
 - ✅ `amplify_outputs.json` ships as a labeled placeholder so the app
   runs in "offline/demo mode" without a deployed backend; `src/lib/amplify.ts`
   detects this and degrades gracefully rather than crashing.
+- ✅ **AI Guided Help** (`/guide`). See the data flow below. The
+  `guidedTriage` custom query (public API-key auth) routes to the
+  `amplify/functions/guided-triage` Lambda; the frontend calls the
+  deterministic offline engine instead when no backend is deployed.
 - ⛔ **Not deployed.** No sandbox has been provisioned in this session —
   see README "Deploy" section for the command to run yourself.
+
+## Guided triage data flow (Phase 3)
+
+```
+answers so far ──► runTriageStep (src/lib/guidedTriage/client.ts)
+                     │
+       backend live? ├─ no ─► nextTriageStep()  (localEngine.ts, deterministic)
+                     │
+                     └─ yes ─► AppSync `guidedTriage` query ─► guided-triage Lambda
+                                   │
+                                   1. scanForDistress(free text)  ─► crisis step (988 / GCAL from catalog), no model call
+                                   2. buildProfile(answers) + scoreResources()  ─► top ~12 candidates from the REAL catalog
+                                   3. Bedrock Converse (tool use: ask_question | give_recommendations),
+                                      system prompt = triagePrompt.ts guardrails, candidates = the ONLY allowed slugs
+                                   4. ground the reply: drop any slug not in the catalog; build the card from the
+                                      catalog row (trusted) + the model's rationale (advisory)
+                                   5. any failure ─► fall back to nextTriageStep()
+                     ▼
+        TriageStep { question | result | crisis }  ── same shape from either path ──►  wizard UI
+                     │
+        on a terminal step ─► GuidedSession.create({ PII-free summary, recommendedResourceSlugs, escalatedToHuman })
+```
+
+Key properties:
+
+- **Grounded.** The model only ever sees a candidate set drawn from the
+  catalog and may only return those slugs; anything else is dropped. It
+  cannot invent a program, phone number, or URL. Retrieval is the
+  dev-tier lexical scorer (`retrieval.ts`) over the `Resource` table —
+  no vector store (see cost note). `KNOWLEDGE_BASE_ID` is a hook for a
+  Bedrock Knowledge Base swap later.
+- **Safe.** A keyword screen (`safety.ts`) runs before any model call;
+  the system prompt independently forbids legal/medical/financial advice
+  and eligibility determinations and requires a 988 hand-off on distress.
+- **Private.** No account, no PII collected. `GuidedSession` stores only
+  the derived structured summary (signals, matched categories,
+  recommended slugs) — never the raw free text a visitor typed.
+- **Consistent.** The offline engine and the Lambda share the question
+  ladder, profile assembly, retrieval, and safety modules
+  (`src/lib/guidedTriage/*`, import-light so the Lambda can reuse them),
+  so chat/voice in Phase 4 can reuse the same brain.
 
 ## Key decisions & deviations from the spec, with rationale
 
@@ -95,11 +141,12 @@ flowchart TB
   has an always-on minimum capacity floor (2 OCUs indexing + 2 OCUs
   search minimum, roughly **$700+/month** even at rest) that's hard to
   justify for a catalog of ~30 seed resources. Per your direction, Phase
-  3 will instead do retrieval with Bedrock embeddings stored via Amplify
-  Data/DynamoDB (or Aurora Serverless v2 + pgvector if the catalog grows
-  past a few hundred items), with the OpenSearch Serverless path
-  documented as a drop-in upgrade for scale. This will be re-confirmed
-  with you before Phase 3 implementation.
+  3 instead does retrieval with a lightweight structured + lexical scorer
+  (`src/lib/guidedTriage/retrieval.ts`) over the `Resource` table — no
+  embeddings, no vector store, zero standing cost. `guided-triage` reads
+  `KNOWLEDGE_BASE_ID` from the environment: set it and the handler can be
+  pointed at a Bedrock Knowledge Base (`retrieve`) as a drop-in upgrade
+  for scale, keeping the same ranking contract.
 - **No AWS deployment from this environment.** This build environment
   has no Node.js/npm and no configured AWS credentials, so Phase 1 is
   code-only — you'll run `npm install` and `npm run sandbox` yourself.
@@ -114,6 +161,16 @@ flowchart TB
 - Amplify Functions get least-privilege access scoped by Amplify's
   resource-access grants (e.g. `data.grantAccess`), not broad
   `AmplifyBackend`-wide policies.
+- **`guided-triage`** (Phase 3, `amplify/backend.ts`): the function role
+  gets exactly two grants — `bedrock:InvokeModel` on
+  `arn:aws:bedrock:*::foundation-model/anthropic.*` plus this account's
+  `inference-profile/*anthropic.*` (// LIVE SETUP: narrow to the one
+  pinned model once `BEDROCK_MODEL_ID` is set), and `grantReadData` on
+  the `Resource` DynamoDB table (read-only, table name injected as
+  `RESOURCE_TABLE_NAME`). No write access, no other services. The
+  browser never calls Bedrock directly — it calls the AppSync
+  `guidedTriage` query with the public API key; the Lambda holds the
+  Bedrock credentials.
 - Bedrock `InvokeModel`/`InvokeModelWithResponseStream` permissions are
   scoped to the specific model ID(s) actually used, not `bedrock:*`.
 - `CONGRESS_GOV_API_KEY` and any Connect-related secrets are stored as

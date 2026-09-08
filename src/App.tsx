@@ -11,6 +11,7 @@ import ComingSoon from "@/routes/ComingSoon";
 // are static and small enough to ship eagerly with the app shell.
 const Resources = lazy(() => import("@/routes/Resources"));
 const ResourceDetail = lazy(() => import("@/routes/ResourceDetail"));
+const Guide = lazy(() => import("@/routes/Guide"));
 const NotFound = lazy(() => import("@/routes/NotFound"));
 
 function Loading() {
@@ -34,16 +35,7 @@ export default function App() {
 
           <Route path="resources" element={<Resources />} />
           <Route path="resources/:slug" element={<ResourceDetail />} />
-          <Route
-            path="guide"
-            element={
-              <ComingSoon
-                title="Not Sure What I Need? Ask Our Guide"
-                phase="Phase 3 — planned"
-                description="Our guided-help assistant will ask a few plain-language questions and point you to real services. Coming in the next phase."
-              />
-            }
-          />
+          <Route path="guide" element={<Guide />} />
           <Route
             path="help"
             element={

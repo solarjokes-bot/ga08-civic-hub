@@ -22,7 +22,8 @@ export function configureAmplify(): { isLive: boolean } {
     if (placeholder) {
       console.warn(
         "[amplify] amplify_outputs.json is still the placeholder — running in offline/demo mode. " +
-          "Run `npm run sandbox` to deploy a dev backend and enable live data, guided help, and Connect chat/voice."
+          "The resource directory and guided help work from bundled data; run `npm run sandbox` to deploy a dev " +
+          "backend for live data, the Bedrock triage path, and (Phase 4) Connect chat/voice."
       );
       isLive = false;
     } else {

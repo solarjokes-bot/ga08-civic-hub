@@ -1,4 +1,5 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
+import { guidedTriage } from "../functions/guided-triage/resource";
 
 /**
  * Amplify Data (AppSync + DynamoDB) — Gen 2, code-first schema.
@@ -107,7 +108,11 @@ const schema = a.schema({
     .model({
       /** Client-generated random id (no PII, not tied to any account). */
       sessionId: a.string().required(),
-      /** The wizard's question/answer trail, as structured JSON. No PII. */
+      /**
+       * PII-free structured summary of the triage run (derived signals,
+       * matched categories, recommended slugs) — NOT the raw free text a
+       * visitor typed, which could contain personal details.
+       */
       answers: a.json(),
       recommendedResourceSlugs: a.string().array(),
       /** Whether the visitor then asked for a human (chat/voice handoff). */
@@ -118,6 +123,21 @@ const schema = a.schema({
       allow.publicApiKey().to(["create"]),
       allow.group("admin").to(["read", "list", "delete"]),
     ]),
+
+  /**
+   * AI Guided Help triage step (Phase 3). Anonymous — the flow collects
+   * no account and no PII. Takes the answers gathered so far as JSON and
+   * returns the next step (a question, a grounded shortlist, or a crisis
+   * hand-off). Handler: amplify/functions/guided-triage/. In offline/demo
+   * mode the frontend runs the deterministic engine instead and never
+   * calls this.
+   */
+  guidedTriage: a
+    .query()
+    .arguments({ answers: a.json() })
+    .returns(a.json())
+    .handler(a.handler.function(guidedTriage))
+    .authorization((allow) => [allow.publicApiKey()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;

@@ -102,7 +102,7 @@ vector-store choice.
 
 1. ✅ **Scaffold** — Vite+React+TS app, Amplify Gen 2 backend skeleton.
 2. ✅ **Resource directory** — `Resource`/`ResourceCategory`/`GuidedSession` models, ~30-entry verified Georgia seed catalog, faceted `/resources` list + `/resources/:slug` detail, URL-synced filters. *(Pause for review after this phase.)*
-3. ⬜ **AI Guided Help** — `/guide` wizard, Bedrock triage function, retrieval over the catalog.
+3. ✅ **AI Guided Help** — `/guide` conversational wizard, `guidedTriage` Bedrock Lambda + custom query, grounded lexical retrieval over the catalog, deterministic offline engine, distress → 988 hand-off, anonymous `GuidedSession` logging.
 4. ⬜ **Amazon Connect** — Lex bot, contact flows, chat widget, web voice button, setup runbook. *(Pause for review after this phase.)*
 5. ⬜ **Representative section** — seed content, Congress.gov sync, Bedrock plain-language bill summaries, legislation/initiatives pages.
 6. ⬜ **Accessibility, performance, docs** — axe pass, Lighthouse, final docs.
@@ -113,16 +113,17 @@ vector-store choice.
 - App shell, routing for the full information architecture, Tailwind design tokens tuned for WCAG AA contrast, skip link, focus-visible styling, reduced-motion support.
 - **Resource directory** — `/resources` faceted search (category, who-it's-for, channel, language, GA-08 county) with live facet counts, URL-synced shareable filters, `aria-live` result count, mobile filter toggle; `/resources/:slug` detail pages with contact channels, official-site links, related resources, and a "confirm with the agency" trust note.
 - **Seed catalog** — ~30 real Georgia programs in `src/data/resources.seed.ts`, each with a `lastVerified` date; unconfirmed details carry inline `// VERIFY:` notes. The frontend reads this array directly in offline mode and the live `Resource` table when a backend is deployed (`src/lib/resourceCatalog.ts`).
-- Amplify Gen 2 `auth` (Cognito, `admin` group), `data` (`Resource` / `ResourceCategory` / `GuidedSession`, public API-key read + `admin` write), and `amplify/seed/seed.ts` — valid code, **not yet deployed**.
+- **AI Guided Help** — `/guide` asks 4–5 plain-language questions (large chips + free-text, progress bar, "I'm not sure", Back), then shows a ranked shortlist with a "why this fits" line and a next step per item, plus an always-offered "talk to a person" hand-off. A keyword screen routes anyone in distress straight to 988 / the Georgia Crisis & Access Line instead of triaging. Every recommendation is a real catalog row — the flow never invents a program, phone, or URL. Runs a deterministic offline engine now; calls the Bedrock Lambda automatically once a backend is deployed.
+- Amplify Gen 2 `auth` (Cognito, `admin` group), `data` (`Resource` / `ResourceCategory` / `GuidedSession` + the `guidedTriage` custom query), `amplify/seed/seed.ts`, and `amplify/functions/guided-triage/` (Bedrock Runtime Converse API, tool-use, least-privilege IAM in `backend.ts`) — valid code, **not yet deployed**.
 - Offline-mode detection so the app never silently pretends to be connected to a backend it isn't.
-- Tests: `src/lib/resourceFilters.test.ts` (filter/facet/URL logic) and route tests for `/resources` + `/resources/:slug` including `jest-axe` checks.
+- Tests (~43): `resourceFilters`, `guidedTriage/{safety,retrieval,localEngine}`, and route tests for `/resources`, `/resources/:slug`, `/guide` including `jest-axe` checks.
 
 **Stubbed (placeholder UI, no backend yet):**
-- `/guide` — placeholder; real Bedrock-powered wizard lands Phase 3 (the `GuidedSession` model is already defined so it needs no schema change).
 - `/help` — placeholder; real Connect chat/voice lands Phase 4.
 - `/representative`, `/representative/legislation`, `/representative/initiatives` — placeholders; real content + Congress.gov sync lands Phase 5.
+- Guided help's **live Bedrock path** is authored but unexercised — no sandbox is deployed, so `/guide` uses the deterministic offline engine. `BEDROCK_MODEL_ID` must be confirmed against the current Bedrock catalog before deploy (`// VERIFY:` in the handler).
 
-**Not started:** everything under `amplify/functions/*` beyond a README each; `Legislator`/`Bill`/`Initiative` models + seed; `docs/connect-flows/`; Bedrock/Connect/Lex integration of any kind; Amplify Hosting connection; Lighthouse pass; i18n runtime library (Phase 2 strings are externalised in `src/i18n/en/`, ready for it).
+**Not started:** `amplify/functions/{lex-fulfillment,congress-sync}` beyond a README each; `Legislator`/`Bill`/`Initiative` models + seed; `docs/connect-flows/`; Connect/Lex integration; Amplify Hosting connection; Lighthouse pass; i18n runtime library (strings are externalised in `src/i18n/en/`, ready for it).
 
 ## Project structure
 
