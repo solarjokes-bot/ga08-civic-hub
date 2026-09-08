@@ -138,7 +138,7 @@ const TOOLS: Tool[] = [
     toolSpec: {
       name: "give_recommendations",
       description:
-        "Finish the triage: return a ranked shortlist of resources, hand off to a person, or (if distress) show crisis resources.",
+        "Finish the triage: return a ranked shortlist of resources, say nothing matched, or (if distress) show crisis resources.",
       inputSchema: {
         json: {
           type: "object",
@@ -184,6 +184,12 @@ function candidateContext(candidates: CivicResource[]): string {
     phone: r.phone ?? null,
     url: r.url,
     applicationUrl: r.applicationUrl ?? null,
+    // Deeper detail so the wizard's "why this fits" can be specific about
+    // what the program actually does, not just its headline.
+    eligibility: r.eligibilitySummary,
+    howToApply: r.howToApply ?? null,
+    documentsNeeded: r.documentsNeeded ?? null,
+    costNote: r.costNote ?? null,
   }));
   return [
     "CATALOG (the ONLY resources you may recommend — use exact slugs):",

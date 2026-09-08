@@ -23,6 +23,12 @@ export type ResourceChannel = "PHONE" | "ONLINE" | "IN_PERSON" | "MAIL";
 /** Sentinel used in `counties` to mean "every Georgia county". */
 export const STATEWIDE = "STATEWIDE" as const;
 
+/** A question the guide can answer directly from catalog content. */
+export interface ProgramQuestion {
+  question: string;
+  answer: string;
+}
+
 export interface CivicResource {
   /** Stable id. For seed data this equals the slug. */
   id: string;
@@ -49,6 +55,25 @@ export interface CivicResource {
   /** ISO-8601 date (YYYY-MM-DD) the details were last checked. */
   lastVerified: string;
   keywords: string[];
+
+  /*
+   * ── Deeper program knowledge ──────────────────────────────────────
+   * Optional, and deliberately so: these feed the chat/voice guide so it
+   * can answer "how do I apply", "what do I bring", "what does it cost"
+   * instead of only pointing at a website. Every value must come from an
+   * official source — an empty field is always better than a guessed one,
+   * because the guide is instructed to say "ask the agency" when a detail
+   * is missing but will happily repeat a wrong one.
+   */
+
+  /** Ordered, plain-language steps to apply. */
+  howToApply?: string[];
+  /** What to have ready / bring. */
+  documentsNeeded?: string[];
+  /** What it costs, or what you receive, where the agency publishes it. */
+  costNote?: string;
+  /** Questions the guide can answer directly, without a web lookup. */
+  commonQuestions?: ProgramQuestion[];
 }
 
 export const LEVEL_LABEL: Record<ResourceLevel, string> = {

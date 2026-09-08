@@ -1,8 +1,8 @@
 # Architecture
 
-Status: **Phase 4 (Amazon Connect)**. This document describes the target
-end-state architecture from the project spec. Components not yet built
-are marked *(planned)*; see [../README.md](../README.md) for the
+Status: **Phases 1-4 built and deployed; the representative section was
+dropped.** The service is AI self-service only — there are no human
+agents and nothing transfers to a queue. See [../README.md](../README.md) for the
 authoritative "what's real vs. stubbed" status as of the latest commit.
 
 ## System diagram
@@ -18,7 +18,7 @@ flowchart TB
     subgraph Amplify["AWS Amplify Gen 2"]
         Auth["Cognito\n(admin group only;\npublic is unauthenticated)"]
         AppSync["AppSync GraphQL API\n(Amplify Data)"]
-        DDB[("DynamoDB\nResource, Legislator, Bill,\nInitiative, GuidedSession")]
+        DDB[("DynamoDB\nResource, ResourceCategory,\nGuidedSession")]
         Hosting["Amplify Hosting\n(Git-based CI/CD)"]
     end
 
@@ -26,7 +26,6 @@ flowchart TB
         Triage["guided-triage\n(deployed)"]
         LexFulfill["lex-fulfillment\n(deployed)"]
         ConnectContact["connect-contact\n(Start*Contact broker,\ndeployed)"]
-        CongressSync["congress-sync\n(scheduled, planned, Phase 5)"]
     end
 
     subgraph AI["Amazon Bedrock"]
@@ -36,12 +35,9 @@ flowchart TB
 
     subgraph Connect["Amazon Connect (provisioned, live)"]
         LexBot["Lex V2 bot\n(GA08SupportBot)"]
-        ContactFlow["Inbound contact flow"]
-        Queues["Queues:\nGeneral Help / Veterans / Housing"]
-        Agent["Human agent (staff)"]
+        ContactFlow["Inbound contact flow\n(no queue transfer)"]
+        NoAgent["No human agents.\nRequests for a person get\n2-1-1 / 988 / the agency"]
     end
-
-    External["Congress.gov API\n(api.congress.gov)\n(planned, Phase 5)"]
 
     SPA -- "GraphQL (API key, public read)" --> AppSync
     SPA -. "admin sign-in" .-> Auth
@@ -63,12 +59,7 @@ flowchart TB
     LexBot -- "fulfillment hook" --> LexFulfill
     LexFulfill --> Claude
     LexFulfill -- "read Resource table" --> DDB
-    ContactFlow --> Queues
-    Queues --> Agent
-
-    CongressSync -- "scheduled pull" --> External
-    CongressSync --> Claude
-    CongressSync --> AppSync
+    ContactFlow -.->|"no transfer"| NoAgent
 
     Hosting -.->|"builds & deploys"| SPA
 ```
@@ -88,8 +79,9 @@ flowchart TB
   `Resource` table when a backend is deployed and the bundled seed array
   otherwise, mapping both to one `CivicResource` shape. Filtering and
   faceting are pure and client-side (`src/lib/resourceFilters.ts`).
-- ✅ `amplify/seed/seed.ts` upserts the catalog + taxonomy + an optional
-  `admin` user into a deployed sandbox (`npm run sandbox:seed`).
+- ✅ `amplify/seed/seed.ts` writes the catalog + taxonomy straight to
+  DynamoDB (`npm run sandbox:seed`). It does not use `ampx sandbox seed`:
+  `@aws-amplify/seed` pins an incompatible `aws-amplify` version.
 - ✅ `amplify_outputs.json` now holds real sandbox endpoints (it shipped as
   a labeled placeholder before the first deploy). `src/lib/amplify.ts`
   still detects the placeholder and falls back to "offline/demo mode", so
@@ -98,19 +90,30 @@ flowchart TB
   `guidedTriage` custom query (public API-key auth) routes to the
   `amplify/functions/guided-triage` Lambda; the frontend calls the
   deterministic offline engine instead when no backend is deployed.
-- ✅ **Amazon Connect chat + web voice** (`/help`) — **live**. The
-  instance, hours, three queues, routing profile, `GA08SupportBot`, and
-  the inbound contact flow are all provisioned; `connect-contact` and
-  `lex-fulfillment` are deployed and wired. See the data flow below and
-  `docs/connect-setup.md` (which also records the gotchas that cost a
-  deploy cycle each). `/help` still degrades to a "not connected — dial
-  2-1-1" state if the env vars are unset, so a fresh clone is safe.
+- ✅ **Amazon Connect chat + web voice** (`/help`) — **live, AI
+  self-service only**. The instance, `GA08SupportBot`, and the inbound
+  contact flow are provisioned; `connect-contact` and `lex-fulfillment`
+  are deployed and wired. There are **no human agents**: the flow contains
+  no queue transfer, and asking for a person returns 2-1-1 / 988 / the
+  agency's own number — all lines that really are staffed. (The three
+  queues and routing profile still exist on the instance but nothing
+  routes into them; they can be deleted.) See the data flow below and
+  `docs/connect-setup.md`, which records the gotchas that cost a deploy
+  cycle each. `/help` still degrades to a "not connected — dial 2-1-1"
+  state if the env vars are unset, so a fresh clone is safe.
+- ✅ **Deeper program knowledge** (`src/data/programKnowledge.ts`) —
+  how-to-apply steps, document lists, cost notes and FAQs merged into the
+  catalog and passed to both the wizard and the chat/voice guide, so
+  self-service can answer follow-ups instead of only linking out.
+  Deliberately partial and strictly sourced: a missing field makes the
+  guide say "ask the agency", which is correct; a guessed one would be
+  repeated as fact.
 - ✅ **Deployed and exercised.** Amplify sandbox + a provisioned Connect
   instance in account `352223710766` / `us-east-1` (2026-09-08). A real
   browser chat reached the Lex bot, the fulfillment Lambda retrieved from
-  DynamoDB, Bedrock wrote a grounded answer, and "talk to a person"
-  routed to a queue. Ids in `docs/connect-setup.md`. Still sandbox-only:
-  no Amplify Hosting connection, and no agents staffed on the queues.
+  DynamoDB, and Bedrock wrote a grounded answer citing real programs.
+  Asking for a person returns 2-1-1 / 988 rather than a transfer. Ids in
+  `docs/connect-setup.md`. Still sandbox-only: no Amplify Hosting.
 - ✅ **Phase 4 verified locally** — `tsc -b`, `eslint`, `vitest`
   (59 tests), and `vite build` all clean; `/help` and `/guide`
   browser-checked. The heavy SDKs stay out of the initial bundle: the

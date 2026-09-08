@@ -2,9 +2,10 @@
 // without needing the app's path alias. See src/lib/resourceTypes.ts.
 import type { CivicResource } from "../lib/resourceTypes";
 import { STATEWIDE } from "../lib/resourceTypes";
+import { PROGRAM_KNOWLEDGE } from "./programKnowledge";
 
 /**
- * Seed catalog for the GA-08 Civic Resource Hub.
+ * Seed catalog for the Civic Resource Hub.
  *
  * WHAT THIS IS
  *  - The single source of truth for the resource directory. The frontend
@@ -20,7 +21,7 @@ import { STATEWIDE } from "../lib/resourceTypes";
  *    pass carries an inline `// VERIFY:` note. Treat those as "confirm
  *    before a production launch", not as settled fact.
  *  - `counties: [STATEWIDE]` means the program serves every Georgia
- *    county (so it matches any GA-08 county filter). Only genuinely
+ *    county (so it matches any Georgia county filter). Only genuinely
  *    local services list specific counties.
  *
  * Plain-language copy target: 6th–8th grade reading level, no acronyms
@@ -29,7 +30,7 @@ import { STATEWIDE } from "../lib/resourceTypes";
 
 const VERIFIED = "2026-09-06";
 
-export const RESOURCE_SEED: CivicResource[] = [
+const BASE_RESOURCES: CivicResource[] = [
   // ─────────────────────────────  FOOD & FAMILY BENEFITS  ─────────────────────────────
   {
     id: "georgia-gateway",
@@ -136,7 +137,7 @@ export const RESOURCE_SEED: CivicResource[] = [
     name: "Feeding Georgia — Find a Food Bank",
     summary: "Find a free food pantry or food bank near you.",
     description:
-      "Feeding Georgia is the network of the state's regional food banks. Its website lets you pick your county and get the contact details for the food bank that serves your area, which can point you to nearby pantries, mobile food distributions, and programs like Kids Cafe. In much of GA-08, the regional food bank is Second Harvest of South Georgia (Valdosta, Thomasville, and Tifton).",
+      "Feeding Georgia is the network of the state's regional food banks. Its website lets you pick your county and get the contact details for the food bank that serves your area, which can point you to nearby pantries, mobile food distributions, and programs like Kids Cafe. In south Georgia, for example, the regional food bank is Second Harvest of South Georgia (Valdosta, Thomasville, and Tifton).",
     category: "FOOD_ASSISTANCE",
     level: "STATE",
     agency: "Feeding Georgia (Georgia Food Bank Association)",
@@ -361,7 +362,7 @@ export const RESOURCE_SEED: CivicResource[] = [
     summary:
       "Rental help that pays part of your rent to a private landlord if your income is very low.",
     description:
-      "The Housing Choice Voucher program helps very low-income families, seniors, and people with disabilities afford safe housing in the regular rental market. You pay roughly 30% of your income toward rent and the voucher covers the rest, up to a limit. In most of GA-08 the program is run by the Georgia Department of Community Affairs; some cities and counties run their own housing authorities. Waiting lists are common and open only at certain times.",
+      "The Housing Choice Voucher program helps very low-income families, seniors, and people with disabilities afford safe housing in the regular rental market. You pay roughly 30% of your income toward rent and the voucher covers the rest, up to a limit. In most of Georgia the program is run by the Georgia Department of Community Affairs; some cities and counties run their own housing authorities. Waiting lists are common and open only at certain times.",
     category: "HOUSING",
     level: "STATE",
     agency: "Georgia Department of Community Affairs",
@@ -512,7 +513,7 @@ export const RESOURCE_SEED: CivicResource[] = [
     summary:
       "Free help filing VA claims and getting the veteran benefits you've earned.",
     description:
-      "The Georgia Department of Veterans Service employs trained Veterans Service Officers who help veterans, their families, caregivers, and survivors apply for federal VA benefits (disability compensation, pension, health care, education, home loans) and state benefits. Field Service Offices are located around the state, including in the GA-08 area; you can schedule an appointment online.",
+      "The Georgia Department of Veterans Service employs trained Veterans Service Officers who help veterans, their families, caregivers, and survivors apply for federal VA benefits (disability compensation, pension, health care, education, home loans) and state benefits. Field Service Offices are located around the state, including in Georgia; you can schedule an appointment online.",
     category: "VETERANS",
     level: "STATE",
     agency: "Georgia Department of Veterans Service",
@@ -542,14 +543,14 @@ export const RESOURCE_SEED: CivicResource[] = [
     summary:
       "VA health care for veterans in middle and south Georgia, with clinics in Perry, Macon, Milledgeville, and Tifton.",
     description:
-      "The Carl Vinson VA Medical Center in Dublin provides primary care, mental health care, women's health, surgery, rehabilitation, and more for enrolled veterans. It also runs community-based outpatient clinics closer to home, including in Perry, Macon, Milledgeville, and Tifton, which serve several GA-08 counties. You can apply for VA health care online, by phone, by mail, or in person.",
+      "The Carl Vinson VA Medical Center in Dublin provides primary care, mental health care, women's health, surgery, rehabilitation, and more for enrolled veterans. It also runs community-based outpatient clinics closer to home, including in Perry, Macon, Milledgeville, and Tifton, which serve several Georgia counties. You can apply for VA health care online, by phone, by mail, or in person.",
     category: "VETERANS",
     level: "FEDERAL",
     agency: "U.S. Department of Veterans Affairs",
     eligibilitySummary:
       "For veterans who meet VA enrollment criteria (based on service history, disability rating, income, and other factors). Some services are available regardless of enrollment or discharge status.",
     eligibilityTags: ["VETERAN"],
-    // Clinics that serve GA-08 residents. The main hospital is in Dublin
+    // Clinics that serve Georgia residents. The main hospital is in Dublin
     // (Laurens County), just outside the district.
     counties: ["Houston", "Bibb", "Baldwin", "Tift"],
     channels: ["IN_PERSON", "PHONE", "ONLINE"],
@@ -738,7 +739,7 @@ export const RESOURCE_SEED: CivicResource[] = [
     summary:
       "Retirement, disability (SSDI), and Supplemental Security Income (SSI) benefits.",
     description:
-      "The Social Security Administration pays retirement and survivors benefits, Social Security Disability Insurance (SSDI) for people who can no longer work, and Supplemental Security Income (SSI) for people with very low income who are 65+, blind, or disabled. You can apply and manage most business online with a free 'my Social Security' account, by phone, or at a local field office (offices serving GA-08 include Macon, Valdosta, Tifton, and Warner Robins).",
+      "The Social Security Administration pays retirement and survivors benefits, Social Security Disability Insurance (SSDI) for people who can no longer work, and Supplemental Security Income (SSI) for people with very low income who are 65+, blind, or disabled. You can apply and manage most business online with a free 'my Social Security' account, by phone, or at a local field office (offices serving Georgia include Macon, Valdosta, Tifton, and Warner Robins).",
     category: "SENIORS",
     level: "FEDERAL",
     agency: "U.S. Social Security Administration",
@@ -835,7 +836,7 @@ export const RESOURCE_SEED: CivicResource[] = [
     summary:
       "Farm loans, disaster payments, and commodity and conservation programs for farmers.",
     description:
-      "The USDA Farm Service Agency runs programs that help farmers and ranchers: direct and guaranteed farm loans (including loans for beginning and underserved producers), disaster assistance for crop and livestock losses, price-support and safety-net programs, and the Conservation Reserve Program. Business is done through USDA Service Centers located in or near most agricultural counties in GA-08.",
+      "The USDA Farm Service Agency runs programs that help farmers and ranchers: direct and guaranteed farm loans (including loans for beginning and underserved producers), disaster assistance for crop and livestock losses, price-support and safety-net programs, and the Conservation Reserve Program. Business is done through USDA Service Centers located in or near most agricultural counties in Georgia.",
     category: "AGRICULTURE",
     level: "FEDERAL",
     agency: "U.S. Department of Agriculture, Farm Service Agency",
@@ -1085,6 +1086,17 @@ export const RESOURCE_SEED: CivicResource[] = [
     ],
   },
 ];
+
+/**
+ * The catalog, with the deeper program knowledge in programKnowledge.ts
+ * merged in. Kept as a merge rather than inlined so the sourcing rules for
+ * that content stay in one reviewable place, and so it is obvious which
+ * programs have been enriched and which fall back to their description.
+ */
+export const RESOURCE_SEED: CivicResource[] = BASE_RESOURCES.map((r) => {
+  const extra = PROGRAM_KNOWLEDGE[r.slug];
+  return extra ? { ...r, ...extra } : r;
+});
 
 /** Quick lookup by slug. */
 export const RESOURCE_SEED_BY_SLUG: Record<string, CivicResource> =

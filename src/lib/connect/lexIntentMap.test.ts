@@ -1,8 +1,9 @@
 import { describe, it, expect } from "vitest";
 import {
   categoriesForIntent,
-  queueForIntent,
   INTENT_CATEGORIES,
+  HANDOFF_INTENT,
+  FALLBACK_INTENT,
 } from "../../../amplify/functions/lex-fulfillment/intentMap";
 import { CATEGORY_META } from "@/lib/categories";
 
@@ -15,16 +16,17 @@ describe("lex intentMap", () => {
     }
   });
 
-  it("routes veterans and housing to their own queues, everything else to General Help", () => {
-    expect(queueForIntent("VeteransHelp")).toBe("Veterans");
-    expect(queueForIntent("HousingHelp")).toBe("Housing");
-    expect(queueForIntent("FoodHelp")).toBe("General Help");
-    expect(queueForIntent(undefined)).toBe("General Help");
-    expect(queueForIntent("SomethingUnmapped")).toBe("General Help");
+  it("returns no categories for the hand-off / fallback intents", () => {
+    expect(categoriesForIntent(HANDOFF_INTENT)).toEqual([]);
+    expect(categoriesForIntent(FALLBACK_INTENT)).toEqual([]);
+    expect(categoriesForIntent(undefined)).toEqual([]);
   });
 
-  it("returns no categories for the hand-off / fallback intents", () => {
-    expect(categoriesForIntent("TalkToAgent")).toEqual([]);
-    expect(categoriesForIntent("FallbackIntent")).toEqual([]);
+  it("does not map any intent to a Connect queue (AI self-service only)", () => {
+    // The queue-routing map was removed with the human-agent hand-off.
+    // If someone reintroduces it, this test should be revisited alongside
+    // the copy that promises a person.
+    const mod = INTENT_CATEGORIES as Record<string, unknown>;
+    expect(Object.keys(mod)).not.toContain(HANDOFF_INTENT);
   });
 });

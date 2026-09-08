@@ -1,8 +1,8 @@
 /**
  * Persistent, unmissable disclaimer per project trust requirements: this
- * is an unofficial informational tool unless/until officially sanctioned
- * by Rep. Scott's office. It is NOT a chrome/toast that can be dismissed
- * forever — it stays in the page flow on every screen.
+ * is an unofficial informational tool, not run by any government agency.
+ * It is NOT a chrome/toast that can be dismissed forever — it stays in the
+ * page flow on every screen.
  */
 export function DisclaimerBanner() {
   return (
@@ -17,9 +17,8 @@ export function DisclaimerBanner() {
       }}
     >
       This is an <strong>unofficial, informational</strong> guide to public
-      resources in Georgia&apos;s 8th District. It is not run by
-      Rep.&nbsp;Austin Scott&apos;s office. Always confirm details with the
-      official agency before you rely on them.
+      resources in Georgia. It is not run by any government agency. Always
+      confirm details with the official agency before you rely on them.
     </div>
   );
 }

@@ -36,10 +36,10 @@ export const guideStrings = {
     whyThisFits: "Why this fits",
     noneTitle: "We couldn't find a strong match",
     noneBody:
-      "That doesn't mean there's no help — it means this tool isn't sure. A real person can help you look.",
-    talkToPerson: "None of these? Talk to a person",
+      "That doesn't mean there's no help — it means this tool isn't sure. Dial 2-1-1 to reach a person who can help you look.",
+    talkToPerson: "None of these? Try the guide, or reach a person",
     talkToPersonBody:
-      "Start a free chat or a browser call and someone will help you find the right service.",
+      "Ask our automated guide by chat or voice for something more specific. To talk to a real person, dial 2-1-1 - a free Georgia helpline answered 24 hours a day.",
     restart: "Start the questions over",
   },
   crisis: {

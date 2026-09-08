@@ -13,7 +13,7 @@ import {
 import { RESOURCE_SEED } from "@/data/resources.seed";
 import type { CivicResource } from "@/lib/resourceTypes";
 import { STATEWIDE } from "@/lib/resourceTypes";
-import { ELSEWHERE_IN_GEORGIA } from "@/data/districtCounties";
+import { OUTSIDE_GEORGIA } from "@/data/georgiaCounties";
 
 const f = (patch: Partial<ResourceFilterState> = {}): ResourceFilterState => ({
   ...EMPTY_FILTERS,
@@ -84,7 +84,7 @@ describe("filterResources", () => {
     expect(filterResources(sample, f({ q: "rent tractor" }))).toHaveLength(0);
   });
 
-  it("treats a STATEWIDE resource as serving any GA-08 county", () => {
+  it("treats a STATEWIDE resource as serving any Georgia county", () => {
     const statewide = make({ slug: "s", counties: [STATEWIDE] });
     const local = make({ slug: "l", counties: ["Tift"] });
     const out = filterResources([statewide, local], f({ counties: ["Bibb"] }));
@@ -96,7 +96,7 @@ describe("filterResources", () => {
     const local = make({ slug: "l", counties: ["Tift"] });
     const out = filterResources(
       [statewide, local],
-      f({ counties: [ELSEWHERE_IN_GEORGIA] }),
+      f({ counties: [OUTSIDE_GEORGIA] }),
     );
     expect(out.map((r) => r.slug)).toEqual(["s"]);
   });

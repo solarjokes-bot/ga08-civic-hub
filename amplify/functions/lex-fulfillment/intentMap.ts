@@ -25,20 +25,18 @@ export const INTENT_CATEGORIES: Record<string, ResourceCategory[]> = {
   IdVotingHelp: ["TRANSPORTATION", "VOTING"],
 };
 
-/** Which Connect queue a hand-off from this intent should route to. */
-export const INTENT_QUEUE: Record<string, string> = {
-  VeteransHelp: "Veterans",
-  HousingHelp: "Housing",
-  // everything else -> General Help (the flow's default)
-};
-
+/**
+ * The intent fired when someone asks for a human. This service is AI
+ * self-service only — there are no agents — so this does NOT route to a
+ * Connect queue. The fulfillment Lambda answers it by pointing at lines
+ * that really are staffed (2-1-1, 988, the agency's own number).
+ *
+ * The queue-routing map that used to live here was removed with the
+ * human-agent hand-off; the Connect queues still exist but nothing
+ * transfers into them.
+ */
 export const HANDOFF_INTENT = "TalkToAgent";
 export const FALLBACK_INTENT = "FallbackIntent";
-
-export function queueForIntent(intentName: string | undefined): string {
-  if (!intentName) return "General Help";
-  return INTENT_QUEUE[intentName] ?? "General Help";
-}
 
 export function categoriesForIntent(
   intentName: string | undefined,

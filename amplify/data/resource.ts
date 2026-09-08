@@ -17,8 +17,8 @@ import { connectContact } from "../functions/connect-contact/resource";
  *                         list, or update one (so it can't be used to look
  *                         up another visitor's answers).
  *
- * Legislator, Bill, and Initiative land in Phase 5 (representative section),
- * each as its own reviewable change — see docs/architecture.md.
+ * (An earlier plan added Legislator/Bill/Initiative for a representative
+ * section; that was dropped — the site carries no elected-official content.)
  *
  * AUTH MODEL (see amplify/auth/resource.ts):
  *  - Public, unauthenticated citizens READ the catalog via the API key.
@@ -78,7 +78,7 @@ const schema = a.schema({
       eligibilityTags: a.string().required().array(),
       /**
        * County names this resource serves. The sentinel "STATEWIDE" means
-       * every Georgia county (so it matches any GA-08 county filter). Local
+       * every Georgia county (so it matches any Georgia county filter). Local
        * resources list specific county names.
        */
       counties: a.string().required().array(),
@@ -93,6 +93,19 @@ const schema = a.schema({
       lastVerified: a.date().required(),
       /** Free-text terms for search + (Phase 3) RAG retrieval. */
       keywords: a.string().required().array(),
+
+      /*
+       * Deeper program knowledge, surfaced to the chat/voice guide so it
+       * can answer "how do I apply" / "what do I bring" / "what does it
+       * cost" rather than only linking out. Optional by design: an empty
+       * field makes the guide say "ask the agency", which is correct,
+       * whereas a guessed one would be repeated as fact.
+       */
+      howToApply: a.string().array(),
+      documentsNeeded: a.string().array(),
+      costNote: a.string(),
+      /** Array of { question, answer } — see ProgramQuestion in src/lib/resourceTypes.ts. */
+      commonQuestions: a.json(),
     })
     .identifier(["slug"])
     .authorization((allow) => [

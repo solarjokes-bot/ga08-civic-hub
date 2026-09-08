@@ -2,7 +2,7 @@ import type { ResourceCategory } from "../categories";
 import { CATEGORY_META } from "../categories";
 import type { CivicResource, ResourceChannel } from "../resourceTypes";
 import { STATEWIDE } from "../resourceTypes";
-import { ELSEWHERE_IN_GEORGIA } from "../../data/districtCounties";
+import { OUTSIDE_GEORGIA } from "../../data/georgiaCounties";
 import { eligibilityTagLabel } from "../../data/eligibilityTags";
 import type { TriageRecommendation } from "./types";
 
@@ -24,7 +24,7 @@ import type { TriageRecommendation } from "./types";
 export interface TriageProfile {
   categories: ResourceCategory[];
   keywords: string[];
-  /** A GA-08 county name, ELSEWHERE_IN_GEORGIA, or undefined (skipped). */
+  /** A Georgia county name, OUTSIDE_GEORGIA, or undefined (skipped). */
   county?: string;
   /** Eligibility-tag keys the visitor self-identified with (optional). */
   signals: string[];
@@ -48,7 +48,7 @@ const OPEN_TO_ALL_BASELINE = 0.5;
 
 function servesCounty(r: CivicResource, county: string): boolean {
   if (r.counties.includes(STATEWIDE)) return true;
-  if (county === ELSEWHERE_IN_GEORGIA) return false;
+  if (county === OUTSIDE_GEORGIA) return false;
   return r.counties.includes(county);
 }
 
@@ -90,7 +90,7 @@ export function scoreResources(
       const kw = keywordHits(resource, profile.keywords);
       if (kw > 0) score += kw * KEYWORD_HIT;
 
-      if (profile.county && profile.county !== ELSEWHERE_IN_GEORGIA) {
+      if (profile.county && profile.county !== OUTSIDE_GEORGIA) {
         if (resource.counties.includes(STATEWIDE)) {
           score += COUNTY_STATEWIDE;
         } else if (servesCounty(resource, profile.county)) {
@@ -100,7 +100,7 @@ export function scoreResources(
           // A local resource that doesn't reach this county isn't useful.
           score -= 100;
         }
-      } else if (profile.county === ELSEWHERE_IN_GEORGIA) {
+      } else if (profile.county === OUTSIDE_GEORGIA) {
         if (!resource.counties.includes(STATEWIDE)) score -= 100;
       }
 
@@ -148,7 +148,7 @@ export function explainMatch(
   if (parts.length === 0) {
     // keyword-only match
     return `This came up for what you described${
-      profile.county && profile.county !== ELSEWHERE_IN_GEORGIA
+      profile.county && profile.county !== OUTSIDE_GEORGIA
         ? `, and it's available in ${profile.county} County`
         : ""
     }.`;

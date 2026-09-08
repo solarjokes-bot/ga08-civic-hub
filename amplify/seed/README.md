@@ -8,21 +8,27 @@
   reads the same array directly in offline/demo mode). Entries carry a
   `lastVerified` date, and anything that couldn't be confirmed from an
   official source has an inline `// VERIFY:` note.
-- One **`admin`** Cognito user, if the `SEED_ADMIN_EMAIL` /
-  `SEED_ADMIN_PASSWORD` sandbox secrets are set (never hardcoded).
+- Deeper per-program knowledge from `src/data/programKnowledge.ts`,
+  merged into the catalog rows.
 
 ## Run
 
 ```bash
-npx ampx sandbox        # in one terminal — deploys the backend
-npx ampx sandbox seed   # in another — runs seed.ts against it
+set -a; source .env; set +a     # table names + Connect ids
+npm run sandbox:seed            # tsx amplify/seed/seed.ts
 ```
+
+(`ampx sandbox seed` is not used — see the header of `seed.ts` for why.)
 
 `// LIVE SETUP:` this needs real AWS credentials and a deployed sandbox.
 It is a no-op in offline/demo mode — there's no backend to write to, and
 the directory already works from the bundled seed array.
 
-## Phase 5
+## Deeper program knowledge
 
-`Legislator`, `Bill`, and `Initiative` seed rows for Rep. Austin Scott
-land here in Phase 5, alongside the Congress.gov sync function.
+`src/data/programKnowledge.ts` adds how-to-apply steps, document lists,
+cost notes and FAQs for the highest-traffic programs, merged into the
+catalog at export. It exists so the chat/voice guide can answer follow-up
+questions without a human to escalate to. Every value must come from an
+official source — an empty field makes the guide say "ask the agency",
+which is correct; a guessed one gets repeated as fact.

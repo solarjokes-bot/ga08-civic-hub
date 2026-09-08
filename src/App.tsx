@@ -4,7 +4,6 @@ import { Layout } from "@/components/Layout";
 import Home from "@/routes/Home";
 import About from "@/routes/About";
 import Accessibility from "@/routes/Accessibility";
-import ComingSoon from "@/routes/ComingSoon";
 
 // Route-level code splitting keeps the initial bundle small for
 // low-bandwidth rural users (perf requirement). Home/About/Accessibility
@@ -38,37 +37,6 @@ export default function App() {
           <Route path="resources/:slug" element={<ResourceDetail />} />
           <Route path="guide" element={<Guide />} />
           <Route path="help" element={<Help />} />
-          <Route
-            path="representative"
-            element={
-              <ComingSoon
-                title="Rep. Austin Scott — GA-08"
-                phase="Phase 5 — planned"
-                description="Committee work, priorities, sponsored legislation, and district initiatives — presented factually and non-partisan — are coming in the next phase."
-              />
-            }
-          />
-          <Route
-            path="representative/legislation"
-            element={
-              <ComingSoon
-                title="Sponsored & Cosponsored Legislation"
-                phase="Phase 5 — planned"
-                description="A live, filterable table of bills sponsored and cosponsored by Rep. Scott, synced from Congress.gov."
-              />
-            }
-          />
-          <Route
-            path="representative/initiatives"
-            element={
-              <ComingSoon
-                title="Initiatives & Insights"
-                phase="Phase 5 — planned"
-                description="District-focused initiatives and plain-language summaries are coming in the next phase."
-              />
-            }
-          />
-
           <Route path="about" element={<About />} />
           <Route path="accessibility" element={<Accessibility />} />
 

@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { helpStrings as S } from "@/i18n/en/help";
-import { fmt } from "@/i18n/en/resources";
-import { chatMode, voiceOffered, SUPPORT_HOURS } from "@/lib/connect/config";
+import { chatMode, voiceOffered, SUPPORT_AVAILABILITY } from "@/lib/connect/config";
 import { ChatLauncher } from "@/components/help/ChatLauncher";
 import { HostedChatWidget } from "@/components/help/HostedChatWidget";
 import { VoiceCallPanel } from "@/components/help/VoiceCallPanel";
@@ -32,16 +31,13 @@ export default function Help() {
         </p>
       )}
 
-      <section aria-labelledby="hours-h" className="mt-8">
-        <h2 id="hours-h" className="text-xl font-bold text-ink-900">
-          {S.hours.heading}
+      <section aria-labelledby="automated-h" className="mt-8">
+        <h2 id="automated-h" className="text-xl font-bold text-ink-900">
+          {S.automated.heading}
         </h2>
-        <p className="mt-1 text-ink-700">
-          {fmt(S.hours.body, {
-            weekdays: SUPPORT_HOURS.weekdays,
-            timezone: SUPPORT_HOURS.timezone,
-            weekend: SUPPORT_HOURS.weekend,
-          })}
+        <p className="mt-1 text-ink-700">{S.automated.body}</p>
+        <p className="mt-2 text-ink-700">
+          <strong>{SUPPORT_AVAILABILITY}.</strong> {S.automated.wantAPerson}
         </p>
       </section>
 

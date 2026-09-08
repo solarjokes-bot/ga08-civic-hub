@@ -7,7 +7,7 @@ import {
   countActiveFilters,
 } from "@/lib/resourceFilters";
 import { eligibilityTagLabel } from "@/data/eligibilityTags";
-import { ELSEWHERE_IN_GEORGIA } from "@/data/districtCounties";
+import { OUTSIDE_GEORGIA } from "@/data/georgiaCounties";
 import { resourcesStrings as S } from "@/i18n/en/resources";
 
 interface Chip {
@@ -79,7 +79,7 @@ export function ActiveFilterChips({
     chips.push({
       key: `county-${county}`,
       label:
-        county === ELSEWHERE_IN_GEORGIA ? county : `${county} County`,
+        county === OUTSIDE_GEORGIA ? county : `${county} County`,
       remove: () => drop("counties", county),
     });
   }

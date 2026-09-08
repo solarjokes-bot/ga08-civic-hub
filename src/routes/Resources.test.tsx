@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { axe } from "jest-axe";
@@ -75,16 +75,12 @@ describe("<Resources />", () => {
     expect(results.violations).toEqual([]);
   });
 
-  it("associates the county filter list with its description", async () => {
+  it("offers county filtering as a single dropdown, not 160 checkboxes", async () => {
     renderAt();
     await screen.findByText(/resources found/i);
-    const countyLegend = screen.getByText("County", { selector: "legend" });
-    const fieldset = countyLegend.closest("fieldset");
-    expect(fieldset).not.toBeNull();
-    expect(
-      within(fieldset as HTMLElement).getByText(
-        /counties in georgia's 8th district/i,
-      ),
-    ).toBeInTheDocument();
+    const select = screen.getByLabelText("County", { selector: "select" });
+    // 159 Georgia counties + "outside Georgia" + the "any county" default
+    expect(select.querySelectorAll("option").length).toBe(161);
+    expect(screen.queryByRole("checkbox", { name: /Bibb County/ })).toBeNull();
   });
 });

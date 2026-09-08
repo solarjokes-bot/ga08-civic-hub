@@ -13,7 +13,7 @@ export const resourcesStrings = {
   directory: {
     title: "Find a Resource",
     intro:
-      "Search public and government programs that serve Georgia's 8th Congressional District. Every listing links to the official agency so you can confirm the details.",
+      "Search public and government programs that serve Georgia. Every listing links to the official agency so you can confirm the details.",
     searchLabel: "Search by keyword",
     searchPlaceholder: "Try “rent help”, “SNAP”, “veterans”…",
     filtersHeading: "Narrow your results",
@@ -27,7 +27,7 @@ export const resourcesStrings = {
     resultsCount_other: "{count} resources found",
     noResultsTitle: "No resources match those filters",
     noResultsBody:
-      "Try removing a filter or searching a different word. You can also chat or call for free and a person will help you look.",
+      "Try removing a filter or searching a different word. You can also ask our automated guide, or dial 2-1-1 to reach a person.",
     skipToResults: "Skip to results",
     sortNote: "Sorted by best match",
     sortNoteAlpha: "Sorted A–Z",
@@ -35,7 +35,7 @@ export const resourcesStrings = {
   facets: {
     category: "Category",
     county: "County",
-    countyHint: "Counties in Georgia's 8th District",
+    countyAny: "Any county in Georgia",
     channel: "How you get help",
     eligibility: "Who it's for",
     language: "Language offered",
@@ -52,7 +52,7 @@ export const resourcesStrings = {
     howToApply: "How to get help",
     contact: "Contact",
     countiesServed: "Areas served",
-    statewide: "All Georgia counties, including all of Georgia's 8th District",
+    statewide: "Every county in Georgia",
     languages: "Languages",
     officialSite: "Go to the official website",
     applyNow: "Start an application",

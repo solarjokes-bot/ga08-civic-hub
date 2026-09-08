@@ -108,7 +108,7 @@ export const handler: Schema["startSupportContact"]["functionHandler"] = async (
 
 function sanitizeName(raw: unknown): string {
   const s = typeof raw === "string" ? raw.trim().slice(0, 60) : "";
-  return s || "GA-08 Hub visitor";
+  return s || "Georgia Hub visitor";
 }
 
 function sanitizeTopic(raw: unknown): string | undefined {

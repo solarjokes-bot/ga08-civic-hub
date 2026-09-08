@@ -12,10 +12,8 @@ import { lexFulfillment } from "./functions/lex-fulfillment/resource";
  * PHASES 1–4: auth + data + guided-triage (Bedrock) + Amazon Connect
  * brokers (connect-contact, lex-fulfillment).
  *
- * Later phases add:
- *  - amplify/functions/congress-sync (Phase 5 — scheduled Congress.gov
- *    pull + Bedrock plain-language bill summaries)
- *  - storage (Phase 5+, if resource/legislator photos need hosting)
+ * The representative/Congress.gov section was dropped: the site is a
+ * generic civic resource directory with no elected-official content.
  *
  * See docs/architecture.md for the target diagram + IAM notes and
  * docs/connect-setup.md for the console/CLI runbook that provisions the

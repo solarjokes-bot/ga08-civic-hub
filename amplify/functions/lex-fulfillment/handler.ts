@@ -4,7 +4,6 @@ import {
   FALLBACK_INTENT,
   HANDOFF_INTENT,
   categoriesForIntent,
-  queueForIntent,
 } from "./intentMap";
 import { loadCorpus } from "../shared/corpus";
 import {
@@ -17,11 +16,17 @@ import { scoreResources } from "../../../src/lib/guidedTriage/retrieval";
 import type { ResourceCategory } from "../../../src/lib/categories";
 
 /**
- * Lex V2 fulfillment hook for the GA-08 support bot.
+ * Lex V2 fulfillment hook for the Georgia support bot.
+ *
+ * THIS IS AI SELF-SERVICE ONLY — there are no human agents staffing this
+ * service. Nothing here may promise, imply, or attempt a transfer to a
+ * person. Where someone wants a human we send them to lines that really
+ * are answered by people: 2-1-1, 988 / the Georgia Crisis & Access Line,
+ * or the agency's own number.
  *
  * Flow of one turn:
- *  1. "talk to a person" intent -> set a session attribute the contact
- *     flow reads to route to the right queue, and close politely.
+ *  1. "talk to a person" intent -> say plainly that this line is automated
+ *     and point at 2-1-1 / 988 / the agency. No queue, no transfer.
  *  2. distress in what the caller said -> 988 / Georgia Crisis & Access
  *     Line, no model call.
  *  3. otherwise -> category from the intent (or keyword hints for the
@@ -35,34 +40,33 @@ import type { ResourceCategory } from "../../../src/lib/categories";
 const REGION = process.env.AWS_REGION ?? "us-east-1";
 
 const CRISIS_MESSAGE =
-  "It sounds like you're going through something really hard, and you deserve support right now. You can call or text 988 any time to reach the Suicide and Crisis Lifeline, or call the Georgia Crisis and Access Line at 1-800-715-4225. If you're in immediate danger, please call 911. Would you like me to connect you with a person?";
+  "It sounds like you're going through something really hard, and you deserve support right now. Please call or text 988 any time to reach the Suicide and Crisis Lifeline, or call the Georgia Crisis and Access Line at 1-800-715-4225. Both are free, confidential, and answered by trained counselors 24 hours a day. If you're in immediate danger, please call 911.";
+
+/**
+ * This service is AI self-service only — there are no human agents behind
+ * it. When someone asks for a person we must NOT imply we will connect
+ * them; we point them to lines that really are answered by people.
+ */
+const HUMAN_HELP_MESSAGE =
+  "I'm an automated guide, so there isn't a person on this line to pass you to. For a real person, dial 2-1-1 - it's a free, confidential Georgia helpline answered 24 hours a day, and they can help you find local services. You can also call the agency for the program you need directly; I can give you their number if you tell me what you're looking for. If this is a mental health crisis, call or text 988.";
 
 export const handler = async (event: LexV2Event): Promise<LexV2Response> => {
   const intentName = event.sessionState.intent?.name ?? FALLBACK_INTENT;
   const said = (event.inputTranscript ?? "").trim();
   const priorAttrs = event.sessionState.sessionAttributes ?? {};
 
-  // 1. Human hand-off.
+  // 1. "Talk to a person" — we have no agents, so be straight about it and
+  // hand off to lines that ARE answered by people (2-1-1, 988, the agency).
   if (intentName === HANDOFF_INTENT) {
-    const queue = queueForIntent(priorAttrs.lastTopicIntent);
-    return closeResponse(
-      intentName,
-      `Okay — I'll connect you with someone who can help. Hold on just a moment.`,
-      {
-        sessionAttributes: { ...priorAttrs, handoff: "true", routeToQueue: queue },
-      },
-    );
+    return closeResponse(intentName, HUMAN_HELP_MESSAGE, {
+      sessionAttributes: { ...priorAttrs, askedForHuman: "true" },
+    });
   }
 
   // 2. Distress screen (independent of the model).
   if (scanForDistress([said]).crisis) {
     return closeResponse(intentName, CRISIS_MESSAGE, {
-      sessionAttributes: {
-        ...priorAttrs,
-        crisisDetected: "true",
-        // Nudge the flow toward a person if they say yes next.
-        suggestHandoff: "true",
-      },
+      sessionAttributes: { ...priorAttrs, crisisDetected: "true" },
     });
   }
 
@@ -83,7 +87,7 @@ export const handler = async (event: LexV2Event): Promise<LexV2Response> => {
   if (categories.length === 0 && keywords.length === 0) {
     return closeResponse(
       intentName,
-      "I want to make sure I point you the right way. Can you tell me a little more about what you need — like help with food, rent, health care, a job, or something else? Or say \"talk to a person\".",
+      "I want to make sure I point you the right way. Can you tell me a little more about what you need - like help with food, rent, health care, a job, or something else? If you would rather talk to a person, dial 2-1-1.",
       { state: "Fulfilled", sessionAttributes: priorAttrs },
     );
   }
@@ -102,7 +106,7 @@ export const handler = async (event: LexV2Event): Promise<LexV2Response> => {
   if (candidates.length === 0) {
     return closeResponse(
       intentName,
-      "I'm not finding a good match for that in our directory. A person can help you look — just say \"talk to a person\".",
+      "I'm not finding a good match for that in our directory. Dial 2-1-1 to reach a person who can help you look - it is free and answered 24 hours a day.",
       { sessionAttributes: priorAttrs },
     );
   }

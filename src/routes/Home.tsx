@@ -7,7 +7,7 @@ export default function Home() {
       <section className="bg-primary-600 px-4 py-14 text-white sm:py-20">
         <div className="mx-auto max-w-4xl text-center">
           <p className="mb-3 inline-block rounded-full bg-white/15 px-4 py-1 text-sm font-semibold">
-            Serving Georgia&apos;s 8th Congressional District
+            Public and government services across Georgia
           </p>
           <h1 className="text-3xl font-bold leading-tight sm:text-5xl">
             Find help. Fast, free, and in plain language.
@@ -34,9 +34,9 @@ export default function Home() {
           </div>
 
           <p className="mt-6 text-sm text-primary-50">
-            Prefer to talk to someone?{" "}
+            Prefer to ask a question?{" "}
             <Link to="/help" className="text-white underline">
-              Chat or call for free
+              Chat or call our guide for free
             </Link>{" "}
             — no phone dialing required.
           </p>
@@ -75,33 +75,6 @@ export default function Home() {
         </ul>
       </section>
 
-      <section
-        aria-labelledby="rep-banner-heading"
-        className="border-t border-ink-900/10 bg-surface-muted px-4 py-12"
-      >
-        <div className="mx-auto flex max-w-6xl flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2
-              id="rep-banner-heading"
-              className="text-xl font-bold text-ink-900"
-            >
-              Your Representative: Austin Scott (R), GA-08
-            </h2>
-            <p className="mt-1 max-w-2xl text-ink-700">
-              In office since 2011. Serves on the Agriculture, Armed
-              Services, Intelligence, and Rules committees. See his
-              committee work, sponsored bills, and district initiatives —
-              presented factually and without spin.
-            </p>
-          </div>
-          <Link
-            to="/representative"
-            className="whitespace-nowrap rounded-lg border-2 border-primary-600 px-5 py-3 font-semibold text-primary-700 no-underline hover:bg-primary-50"
-          >
-            View representative info
-          </Link>
-        </div>
-      </section>
     </div>
   );
 }

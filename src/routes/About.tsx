@@ -5,21 +5,19 @@ export default function About() {
 
       <div className="prose-block mt-6 space-y-4 text-ink-700">
         <p>
-          The GA-08 Civic Resource Hub is a free, independent guide to
-          public and government resources for people living in
-          Georgia&apos;s 8th Congressional District. It helps you find
-          services like food assistance, housing help, health care,
-          veterans benefits, and more — and points you to your
-          Congressman&apos;s official work in Congress.
+          The Civic Resource Hub is a free, independent guide to public
+          and government resources for people living in Georgia. It helps
+          you find services like food assistance, housing help, health
+          care, veterans benefits, and more.
         </p>
 
         <p>
           <strong>This site is unofficial.</strong> It is not created,
-          run, or endorsed by Rep. Austin Scott&apos;s office, the U.S.
-          House of Representatives, or the State of Georgia. It is a
-          civic-information project. We link directly to official agency
-          websites and phone numbers so you can always verify what you
-          read here.
+          run, or endorsed by any government agency, including the State
+          of Georgia or any of the agencies listed here. It is an
+          independent civic-information project. We link directly to
+          official agency websites and phone numbers so you can always
+          verify what you read here.
         </p>
 
         <h2 className="text-xl font-bold text-ink-900">
@@ -39,16 +37,6 @@ export default function About() {
           need to create an account to search resources or use guided
           help. We keep anonymous records of the questions the guide asks
           (not who asked them) so we can improve it over time.
-        </p>
-
-        <h2 className="text-xl font-bold text-ink-900">
-          The representative section
-        </h2>
-        <p>
-          Information about Rep. Scott&apos;s committee work and
-          legislation is pulled from the official Congress.gov API and
-          presented factually, without editorializing. This is not a
-          campaign or fundraising site.
         </p>
 
         <h2 className="text-xl font-bold text-ink-900">In a crisis</h2>

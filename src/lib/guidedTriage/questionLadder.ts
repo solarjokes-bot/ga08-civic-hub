@@ -1,5 +1,5 @@
 import type { ResourceCategory } from "../categories";
-import { GA08_COUNTIES, ELSEWHERE_IN_GEORGIA } from "../../data/districtCounties";
+import { GEORGIA_COUNTIES, OUTSIDE_GEORGIA } from "../../data/georgiaCounties";
 import { ELIGIBILITY_TAGS } from "../../data/eligibilityTags";
 import type { TriageOption, TriageQuestion, TriageStepId } from "./types";
 
@@ -200,8 +200,8 @@ export const NEEDS_BY_SITUATION: Record<string, NeedDef[]> = {
 // ───────────────────────── step 3: county ─────────────────────────
 
 export const COUNTY_OPTIONS: TriageOption[] = [
-  ...GA08_COUNTIES.map((c) => ({ label: `${c} County`, value: c })),
-  { label: ELSEWHERE_IN_GEORGIA, value: ELSEWHERE_IN_GEORGIA },
+  ...GEORGIA_COUNTIES.map((c) => ({ label: `${c} County`, value: c })),
+  { label: OUTSIDE_GEORGIA, value: OUTSIDE_GEORGIA },
 ];
 
 // ───────────────────────── step 4: eligibility signals ─────────────────────────
@@ -280,7 +280,7 @@ const SITUATION_QUESTION: TriageQuestion = {
 const COUNTY_QUESTION: TriageQuestion = {
   id: "county",
   title: "Which county do you live in?",
-  help: "This helps us show services near you. Choose “Elsewhere in Georgia” if you're outside the 8th District.",
+  help: "This helps us show services near you. Choose “I'm outside Georgia” if you don't live in Georgia.",
   kind: "county",
   options: COUNTY_OPTIONS,
   allowText: false,

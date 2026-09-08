@@ -15,8 +15,8 @@ import {
 } from "@/lib/resourceFilters";
 import {
   COUNTY_FILTER_OPTIONS,
-  ELSEWHERE_IN_GEORGIA,
-} from "@/data/districtCounties";
+  OUTSIDE_GEORGIA,
+} from "@/data/georgiaCounties";
 import { ELIGIBILITY_TAGS } from "@/data/eligibilityTags";
 import { resourcesStrings as S } from "@/i18n/en/resources";
 
@@ -218,35 +218,39 @@ export function FilterPanel({
         </fieldset>
       )}
 
-      {/* County */}
-      <fieldset className="border-0 p-0">
-        <legend className="mb-1 text-sm font-bold uppercase tracking-wide text-ink-700">
-          {S.facets.county}
-        </legend>
-        <p id={countyListId} className="mb-1 text-xs text-ink-500">
-          {S.facets.countyHint}
-        </p>
-        <ul
-          aria-describedby={countyListId}
-          className="max-h-64 space-y-0.5 overflow-y-auto rounded-md border border-ink-900/10 p-1"
+      {/*
+        County is a dropdown, not a checkbox list. Georgia has 159
+        counties: rendering them as checkboxes put ~160 inputs in the DOM
+        and made every keystroke in the search box recompute a per-county
+        tally across the whole catalog, which was measurably slow — bad
+        for the low-bandwidth, older-device audience this site targets.
+        A single select is lighter, far better on mobile, and matches the
+        county picker the /guide wizard already uses. `filters.counties`
+        stays an array so URL round-tripping is unchanged.
+      */}
+      <div>
+        <label
+          htmlFor={countyListId}
+          className="mb-1 block text-sm font-bold uppercase tracking-wide text-ink-700"
         >
+          {S.facets.county}
+        </label>
+        <select
+          id={countyListId}
+          value={filters.counties[0] ?? ""}
+          onChange={(e) =>
+            set({ counties: e.target.value ? [e.target.value] : [] })
+          }
+          className="w-full rounded-md border border-ink-900/20 bg-surface px-3 py-2 text-sm"
+        >
+          <option value="">{S.facets.countyAny}</option>
           {COUNTY_FILTER_OPTIONS.map((county) => (
-            <OptionRow
-              key={county}
-              name="county"
-              value={county}
-              label={
-                county === ELSEWHERE_IN_GEORGIA ? county : `${county} County`
-              }
-              count={facetCounts.counties[county]}
-              checked={filters.counties.includes(county)}
-              onToggle={() =>
-                set({ counties: toggleValue(filters.counties, county) })
-              }
-            />
+            <option key={county} value={county}>
+              {county === OUTSIDE_GEORGIA ? county : `${county} County`}
+            </option>
           ))}
-        </ul>
-      </fieldset>
+        </select>
+      </div>
     </div>
   );
 }

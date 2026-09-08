@@ -6,7 +6,6 @@ const NAV_LINKS = [
   { to: "/resources", label: "Find a Resource" },
   { to: "/guide", label: "Not Sure What I Need" },
   { to: "/help", label: "Chat or Call" },
-  { to: "/representative", label: "Rep. Austin Scott" },
 ];
 
 function navLinkClass({ isActive }: { isActive: boolean }) {
@@ -36,9 +35,9 @@ export function Layout() {
           >
             <span aria-hidden="true">🏛️</span>
             <span>
-              GA-08 Civic Resource Hub
+              Civic Resource Hub
               <span className="block text-xs font-normal text-ink-500">
-                Georgia&apos;s 8th Congressional District
+                Public and government services in Georgia
               </span>
             </span>
           </NavLink>
@@ -70,12 +69,6 @@ export function Layout() {
               </li>
               <li>
                 <NavLink to="/accessibility">Accessibility statement</NavLink>
-              </li>
-              <li>
-                <NavLink to="/representative/legislation">Legislation</NavLink>
-              </li>
-              <li>
-                <NavLink to="/representative/initiatives">Initiatives</NavLink>
               </li>
               <li>
                 <a

@@ -2,10 +2,7 @@ import type { ResourceCategory } from "@/lib/categories";
 import { CATEGORY_META } from "@/lib/categories";
 import type { CivicResource, ResourceChannel } from "@/lib/resourceTypes";
 import { STATEWIDE } from "@/lib/resourceTypes";
-import {
-  COUNTY_FILTER_OPTIONS,
-  ELSEWHERE_IN_GEORGIA,
-} from "@/data/districtCounties";
+import { OUTSIDE_GEORGIA } from "@/data/georgiaCounties";
 
 /**
  * Pure, framework-free filtering + faceting for the resource directory.
@@ -20,7 +17,7 @@ export interface ResourceFilterState {
   /** Free-text query. Matched as AND-of-terms across several fields. */
   q: string;
   categories: ResourceCategory[];
-  /** County names, and/or the ELSEWHERE_IN_GEORGIA sentinel. */
+  /** County names, and/or the OUTSIDE_GEORGIA sentinel. */
   counties: string[];
   channels: ResourceChannel[];
   /** Eligibility-tag keys (see src/data/eligibilityTags.ts). */
@@ -81,7 +78,7 @@ function matchesQuery(r: CivicResource, q: string): boolean {
 /** A resource "serves" a county if it's statewide or lists that county. */
 export function servesCounty(r: CivicResource, county: string): boolean {
   if (r.counties.includes(STATEWIDE)) return true;
-  if (county === ELSEWHERE_IN_GEORGIA) return false; // only statewide resources
+  if (county === OUTSIDE_GEORGIA) return false; // only statewide resources
   return r.counties.includes(county);
 }
 
@@ -166,7 +163,6 @@ export interface FacetCounts {
   channels: Partial<Record<ResourceChannel, number>>;
   eligibilityTags: Record<string, number>;
   languages: Record<string, number>;
-  counties: Record<string, number>;
 }
 
 export function computeFacetCounts(
@@ -178,7 +174,6 @@ export function computeFacetCounts(
     channels: {},
     eligibilityTags: {},
     languages: {},
-    counties: {},
   };
 
   for (const r of all) {
@@ -198,13 +193,6 @@ export function computeFacetCounts(
     if (passesAllExcept(r, f, "languages")) {
       for (const lng of r.languages) {
         counts.languages[lng] = (counts.languages[lng] ?? 0) + 1;
-      }
-    }
-    if (passesAllExcept(r, f, "counties")) {
-      for (const county of COUNTY_FILTER_OPTIONS) {
-        if (servesCounty(r, county)) {
-          counts.counties[county] = (counts.counties[county] ?? 0) + 1;
-        }
       }
     }
   }

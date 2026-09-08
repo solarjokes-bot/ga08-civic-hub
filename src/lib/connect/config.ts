@@ -57,11 +57,10 @@ export const connectConfig = {
   },
 };
 
-/** Support hours shown on /help. Plain content, not infrastructure. */
-export const SUPPORT_HOURS = {
-  timezone: "Eastern time",
-  weekdays: "Monday to Friday, 8:00 a.m. to 6:00 p.m.",
-  weekend: "Closed weekends and federal holidays",
-  // // VERIFY: set real staffed hours before launch; the bot answers
-  // 24/7 but a live person is only available during these hours.
-} as const;
+/**
+ * There are no staffed hours: this is AI self-service, available whenever
+ * the site is. The Connect instance still has an hours-of-operation record
+ * (the contact flow requires one), but nothing routes to a human, so the
+ * UI must not advertise agent availability.
+ */
+export const SUPPORT_AVAILABILITY = "Available any time, day or night";

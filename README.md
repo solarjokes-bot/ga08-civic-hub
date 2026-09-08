@@ -1,15 +1,14 @@
-# GA-08 Civic Resource Hub
+# Civic Resource Hub
 
-A free, non-partisan guide to public and government resources for
-residents of Georgia's 8th Congressional District — with AI-guided
-triage, live chat, and browser-based voice help, plus a factual
-overview of Rep. Austin Scott's committee work and legislation.
+A free, independent guide to public and government resources in Georgia —
+with an AI guided-help wizard, and chat and in-browser voice self-service
+that answer questions grounded in the same verified directory.
 
-**This is an unofficial, independent project** — not run by or
-affiliated with Rep. Scott's office. See [`/about`](src/routes/About.tsx)
+**This is an unofficial, independent project** — not run by or affiliated
+with any government agency. See [`/about`](src/routes/About.tsx)
 and [`/accessibility`](src/routes/Accessibility.tsx) in the app.
 
-## Status: Phases 1–4 done and deployed; Phase 5 deferred
+## Status: Phases 1–4 done and deployed; Phase 5 dropped
 
 See [Build order](#build-order) below.
 
@@ -21,14 +20,14 @@ See [Build order](#build-order) below.
   in the catalog, with a deterministic offline engine as the fallback.
 - **Phase 4** — Amazon Connect chat + in-browser WebRTC voice at `/help`,
   fronted by a Lex bot whose answers come from the same catalog.
-- **Phase 5** — representative section: **deferred**, not started.
-  `/representative*` are still placeholders.
+- **Phase 5** — representative section: **dropped**. The site carries no
+  elected-official content; those routes were removed.
 
 **Deployed and verified end-to-end** in AWS account `352223710766`
 (`us-east-1`) on 2026-09-08: a real browser chat reaches the Lex bot, the
 fulfillment Lambda retrieves from DynamoDB, Bedrock writes a grounded
-answer naming real catalog resources, and "talk to a person" routes to a
-queue. Provisioned ids are in [docs/connect-setup.md](docs/connect-setup.md).
+answer naming real catalog resources. Asking for a person returns 2-1-1 /
+988 rather than a transfer. Provisioned ids are in [docs/connect-setup.md](docs/connect-setup.md).
 
 This is a **sandbox** deployment (`ampx sandbox`), not production — there
 is no Amplify Hosting connection yet.
@@ -37,8 +36,8 @@ is no Amplify Hosting connection yet.
 
 - **Frontend:** React 18 + TypeScript + Vite, React Router, Zustand, Tailwind CSS v4.
 - **Backend:** AWS Amplify Gen 2 (Amplify Data/AppSync/DynamoDB, Amplify Auth/Cognito, Amplify Functions/Lambda).
-- **AI:** Amazon Bedrock (Claude via Bedrock Runtime) — planned, Phase 3.
-- **Contact center:** Amazon Connect (Chat + web voice) with an Amazon Lex V2 bot — planned, Phase 4.
+- **AI:** Amazon Bedrock (Claude Sonnet 5 via the Bedrock Runtime Converse API).
+- **Contact center:** Amazon Connect (chat + in-browser WebRTC voice) fronted by an Amazon Lex V2 bot. **AI self-service only — no human agents.**
 - **Hosting:** Amplify Hosting, Git-based CI/CD.
 
 ## Local development
@@ -73,13 +72,14 @@ Requires AWS credentials configured locally (`aws configure` / SSO).
 Then load the seed catalog into it:
 
 ```bash
-npm run sandbox:seed   # runs amplify/seed/seed.ts against the sandbox
+set -a; source .env; set +a   # table names, Connect ids, model id
+npm run sandbox:seed          # tsx amplify/seed/seed.ts
 ```
 
-Optionally set `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` sandbox
-secrets first (`npx ampx sandbox secret set …`) to have the seed create
-an `admin` Cognito user. The frontend reads the same seed array directly
-when no backend is deployed, so the directory works either way.
+`ampx sandbox seed` is deliberately not used — `@aws-amplify/seed` pins an
+incompatible `aws-amplify`; see the header of `amplify/seed/seed.ts`. The
+frontend reads the same seed array directly when no backend is deployed,
+so the directory works either way.
 
 ## Deploy (production)
 
@@ -97,11 +97,11 @@ once later phases are live, so you can budget before approving each:
 | Component | Phase | Cost shape |
 |---|---|---|
 | AppSync + DynamoDB + Cognito (sandbox/prod) | 1-2 | Pay-per-request, low at this traffic scale |
-| Bedrock Runtime (Claude calls) | 3, 5 | Pay-per-token, scales with usage |
+| Bedrock Runtime (Claude calls) | 3, 4 | Pay-per-token, scales with usage |
 | Retrieval for guided help | 3 | Dev-tier: DynamoDB/Aurora embeddings, low cost. **Not** OpenSearch Serverless (~$700+/mo minimum) — see `docs/architecture.md` |
 | Amazon Connect instance | 4 | No base fee for the instance itself; usage-based (chat/voice minutes) once traffic exists |
 | Claimed phone number | 4 | ~$1-$25/mo depending on type — **only if** you want traditional phone dial-in; web voice via WebRTC doesn't require one |
-| Amplify Hosting | 6 | Small monthly + build-minute cost |
+| Amplify Hosting | future | Small monthly + build-minute cost |
 
 **Nothing above gets provisioned without asking you first**, per this
 project's ground rules — especially the Connect instance and any
@@ -113,17 +113,18 @@ vector-store choice.
 2. ✅ **Resource directory** — `Resource`/`ResourceCategory`/`GuidedSession` models, ~30-entry verified Georgia seed catalog, faceted `/resources` list + `/resources/:slug` detail, URL-synced filters. *(Pause for review after this phase.)*
 3. ✅ **AI Guided Help** — `/guide` conversational wizard, `guidedTriage` Bedrock Lambda + custom query, grounded lexical retrieval over the catalog, deterministic offline engine, distress → 988 hand-off, anonymous `GuidedSession` logging.
 4. ✅ **Amazon Connect** — `/help` live-support hub, custom `amazon-connect-chatjs` chat widget (+ hosted-widget fallback), in-browser WebRTC voice (`amazon-chime-sdk-js`), `connect-contact` + `lex-fulfillment` Lambdas, `startSupportContact` mutation, exported contact flow + Lex bot (`docs/connect-flows/`), and the `docs/connect-setup.md` runbook. **Provisioned and verified live** — real browser chat → Lex → Bedrock → grounded answer → queue hand-off.
-5. ⏸️ **Representative section — DEFERRED**, not started. Seed content, Congress.gov sync, Bedrock plain-language bill summaries, legislation/initiatives pages. `/representative*` remain placeholders; needs a free Congress.gov API key.
+5. ❌ **Representative section — DROPPED.** The site is generic: no elected-official content, no Congress.gov sync.
 6. ⬜ **Accessibility, performance, docs** — axe pass, Lighthouse, final docs.
 
 ## What's real vs. stubbed
 
 **Real / working now:**
 - App shell, routing for the full information architecture, Tailwind design tokens tuned for WCAG AA contrast, skip link, focus-visible styling, reduced-motion support.
-- **Resource directory** — `/resources` faceted search (category, who-it's-for, channel, language, GA-08 county) with live facet counts, URL-synced shareable filters, `aria-live` result count, mobile filter toggle; `/resources/:slug` detail pages with contact channels, official-site links, related resources, and a "confirm with the agency" trust note.
+- **Resource directory** — `/resources` faceted search (category, who-it's-for, channel, language, and a Georgia county dropdown) with live facet counts, URL-synced shareable filters, `aria-live` result count, mobile filter toggle; `/resources/:slug` detail pages with contact channels, official-site links, related resources, and a "confirm with the agency" trust note.
 - **Seed catalog** — ~30 real Georgia programs in `src/data/resources.seed.ts`, each with a `lastVerified` date; unconfirmed details carry inline `// VERIFY:` notes. The frontend reads this array directly in offline mode and the live `Resource` table when a backend is deployed (`src/lib/resourceCatalog.ts`).
-- **AI Guided Help** — `/guide` asks 4–5 plain-language questions (large chips + free-text, progress bar, "I'm not sure", Back), then shows a ranked shortlist with a "why this fits" line and a next step per item, plus an always-offered "talk to a person" hand-off. A keyword screen routes anyone in distress straight to 988 / the Georgia Crisis & Access Line instead of triaging. Every recommendation is a real catalog row — the flow never invents a program, phone, or URL. Runs a deterministic offline engine now; calls the Bedrock Lambda automatically once a backend is deployed.
-- **Live support (`/help`)** — a support hub with hours, "what to expect", an accessible custom chat widget (transcript `role="log"`/`aria-live`, labelled input, typing indicator), and an accessible "Call for help from your browser" WebRTC button (mic-permission messaging, connecting/ringing/connected states, mute with `aria-pressed`, a visible mm:ss timer, End call). Backed by `connect-contact` (StartChatContact / StartWebRTCContact) and `lex-fulfillment` (intent → retrieval → grounded Bedrock answer; distress → 988; "talk to a person" → topic-routed queue). **Verified live in a browser.** If the Connect env vars are unset, `/help` degrades to a "not connected — dial 2-1-1" state rather than showing a broken widget.
+- **AI Guided Help** — `/guide` asks 4–5 plain-language questions (large chips + free-text, progress bar, "I'm not sure", Back), then shows a ranked shortlist with a "why this fits" line and a next step per item, plus pointers to 2-1-1 when nothing fits. A keyword screen routes anyone in distress straight to 988 / the Georgia Crisis & Access Line instead of triaging. Every recommendation is a real catalog row — the flow never invents a program, phone, or URL. Runs a deterministic offline engine now; calls the Bedrock Lambda automatically once a backend is deployed.
+- **Live support (`/help`) — AI self-service, no human agents.** An accessible chat widget (transcript `role="log"`/`aria-live`, labelled input, typing indicator) and an in-browser WebRTC voice call (mic-permission messaging, connecting/ringing/connected states, mute with `aria-pressed`, visible mm:ss timer). Backed by `connect-contact` (StartChatContact / StartWebRTCContact) and `lex-fulfillment` (intent → retrieval → grounded Bedrock answer). **Nothing promises or attempts a transfer to a person**: asking for one returns 2-1-1 (a real, staffed Georgia helpline), 988 for crisis, or the agency's own number. Verified live in a browser. If the Connect env vars are unset, `/help` degrades to a "not connected — dial 2-1-1" state.
+- **Deeper program knowledge** — `src/data/programKnowledge.ts` adds how-to-apply steps, document lists, cost notes and FAQs for the highest-traffic programs, merged into the catalog and fed to the guide. This is what lets self-service answer "what do I bring?" instead of only linking out. Coverage is deliberately partial and every value is sourced: an empty field makes the guide say "ask the agency", which is correct, whereas a guessed one would be repeated as fact.
 - Amplify Gen 2 `auth` (Cognito, `admin` group), `data` (`Resource` / `ResourceCategory` / `GuidedSession` + `guidedTriage` query + `startSupportContact` mutation), `amplify/seed/seed.ts`, and `amplify/functions/{guided-triage,connect-contact,lex-fulfillment}` with least-privilege IAM in `backend.ts` — **deployed to a sandbox and exercised end-to-end**.
 - `docs/connect-flows/inbound-flow.json` (importable Connect flow) + `docs/connect-flows/lex-bot.json` (GA08SupportBot design) + `docs/connect-setup.md` (step-by-step runbook incl. the no-AWS-keys-client-side credential path).
 - Offline-mode detection so the app never silently pretends to be connected to a backend it isn't.
@@ -135,7 +136,7 @@ vector-store choice.
 - **No human agents are staffed.** "Talk to a person" transfers to the `General Help` / `Veterans` / `Housing` queues, but nobody is signed into the Contact Control Panel, so a hand-off currently lands in the queue and then hits the "all our helpers are busy — dial 2-1-1" path.
 - **Voice is verified at the API level, not by a real call.** `StartWebRTCContact` returns a valid Chime meeting + attendee, and the call state machine is unit-tested, but no human has actually spoken through a browser call yet.
 
-**Not started:** `amplify/functions/congress-sync`; `Legislator`/`Bill`/`Initiative` models + seed; Amplify Hosting connection; Lighthouse pass; i18n runtime library (strings are externalised in `src/i18n/en/`, ready for it).
+**Not started:** Amplify Hosting connection / CI-CD; Lighthouse pass; i18n runtime library (strings are externalised in `src/i18n/en/`, ready for it); knowledge coverage beyond the 12 programs in `programKnowledge.ts`.
 
 ## Project structure
 

@@ -21,7 +21,7 @@
   ],
   "bot": {
     "name": "GA08SupportBot",
-    "description": "Front door for the GA-08 Civic Resource Hub chat and web voice.",
+    "description": "Front door for the Civic Resource Hub chat and web voice.",
     "roleArn": "REPLACE_WITH_LEX_SERVICE_LINKED_ROLE_ARN",
     "dataPrivacy": { "childDirected": false },
     "idleSessionTTLInSeconds": 300
@@ -236,7 +236,7 @@
           { "sampleValue": { "value": "Ben Hill" } },
           { "sampleValue": { "value": "Baldwin" } }
         ],
-        "_comment": "Full GA-08 county list is in src/data/districtCounties.ts — add the rest before launch."
+        "_comment": "Full Georgia county list is in src/data/districtCounties.ts — add the rest before launch."
       }
     }
   }
