@@ -23,9 +23,9 @@ flowchart TB
     end
 
     subgraph Functions["Amplify Functions (Lambda)"]
-        Triage["guided-triage\n(built, P3 — not deployed)"]
-        LexFulfill["lex-fulfillment\n(built, P4 — not deployed)"]
-        ConnectContact["connect-contact\n(Start*Contact broker,\nbuilt, P4 — not deployed)"]
+        Triage["guided-triage\n(deployed)"]
+        LexFulfill["lex-fulfillment\n(deployed)"]
+        ConnectContact["connect-contact\n(Start*Contact broker,\ndeployed)"]
         CongressSync["congress-sync\n(scheduled, planned, Phase 5)"]
     end
 
@@ -34,7 +34,7 @@ flowchart TB
         KB["Dev-tier retrieval:\nlexical scorer over the\nResource table —\nno vector store\n(KNOWLEDGE_BASE_ID hook\nfor a later swap)"]
     end
 
-    subgraph Connect["Amazon Connect (instance not provisioned)"]
+    subgraph Connect["Amazon Connect (provisioned, live)"]
         LexBot["Lex V2 bot\n(GA08SupportBot)"]
         ContactFlow["Inbound contact flow"]
         Queues["Queues:\nGeneral Help / Veterans / Housing"]
@@ -90,23 +90,27 @@ flowchart TB
   faceting are pure and client-side (`src/lib/resourceFilters.ts`).
 - ✅ `amplify/seed/seed.ts` upserts the catalog + taxonomy + an optional
   `admin` user into a deployed sandbox (`npm run sandbox:seed`).
-- ✅ `amplify_outputs.json` ships as a labeled placeholder so the app
-  runs in "offline/demo mode" without a deployed backend; `src/lib/amplify.ts`
-  detects this and degrades gracefully rather than crashing.
+- ✅ `amplify_outputs.json` now holds real sandbox endpoints (it shipped as
+  a labeled placeholder before the first deploy). `src/lib/amplify.ts`
+  still detects the placeholder and falls back to "offline/demo mode", so
+  a fresh clone without a backend degrades gracefully rather than crashing.
 - ✅ **AI Guided Help** (`/guide`). See the data flow below. The
   `guidedTriage` custom query (public API-key auth) routes to the
   `amplify/functions/guided-triage` Lambda; the frontend calls the
   deterministic offline engine instead when no backend is deployed.
-- ✅ **Amazon Connect chat + web voice** (`/help`). Code + IaC + the
-  console runbook are complete; the Connect **instance is not
-  provisioned** (real monthly cost — needs owner go-ahead). See the data
-  flow below and `docs/connect-setup.md`. `connect-contact` +
-  `lex-fulfillment` Lambdas, the `startSupportContact` mutation, the
-  contact flow / Lex bot exports (`docs/connect-flows/`), and the
-  accessible chat + WebRTC voice widgets all exist. `/help` degrades to a
-  "not connected — dial 2-1-1" state until the env vars are set.
-- ⛔ **Not deployed.** No sandbox or Connect instance has been
-  provisioned — see README "Deploy" and `docs/connect-setup.md`.
+- ✅ **Amazon Connect chat + web voice** (`/help`) — **live**. The
+  instance, hours, three queues, routing profile, `GA08SupportBot`, and
+  the inbound contact flow are all provisioned; `connect-contact` and
+  `lex-fulfillment` are deployed and wired. See the data flow below and
+  `docs/connect-setup.md` (which also records the gotchas that cost a
+  deploy cycle each). `/help` still degrades to a "not connected — dial
+  2-1-1" state if the env vars are unset, so a fresh clone is safe.
+- ✅ **Deployed and exercised.** Amplify sandbox + a provisioned Connect
+  instance in account `352223710766` / `us-east-1` (2026-09-08). A real
+  browser chat reached the Lex bot, the fulfillment Lambda retrieved from
+  DynamoDB, Bedrock wrote a grounded answer, and "talk to a person"
+  routed to a queue. Ids in `docs/connect-setup.md`. Still sandbox-only:
+  no Amplify Hosting connection, and no agents staffed on the queues.
 - ✅ **Phase 4 verified locally** — `tsc -b`, `eslint`, `vitest`
   (59 tests), and `vite build` all clean; `/help` and `/guide`
   browser-checked. The heavy SDKs stay out of the initial bundle: the
@@ -208,11 +212,11 @@ There is no AWS signing in the client and nothing long-lived.
   `KNOWLEDGE_BASE_ID` from the environment: set it and the handler can be
   pointed at a Bedrock Knowledge Base (`retrieve`) as a drop-in upgrade
   for scale, keeping the same ranking contract.
-- **No AWS deployment from this environment.** This build environment
-  has no Node.js/npm and no configured AWS credentials, so Phase 1 is
-  code-only — you'll run `npm install` and `npm run sandbox` yourself.
-  All later phases follow the same pattern: infrastructure-as-code is
-  written and reviewed here; you run the deploy commands.
+- **Deploys are driven from this repo.** Phases 1-3 were authored without
+  AWS credentials on the machine (infrastructure-as-code written here, run
+  by you). From Phase 4 the toolchain and credentials became available, so
+  the sandbox and the Connect resources were provisioned and verified
+  directly. Production (Amplify Hosting) is still unconnected.
 - **No end-user accounts.** Cognito is used only for the `admin` group
   (catalog editors). Citizens never sign in — this matches the
   anonymous-by-default privacy requirement for guided help.

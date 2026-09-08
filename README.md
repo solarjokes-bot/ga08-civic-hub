@@ -9,20 +9,29 @@ overview of Rep. Austin Scott's committee work and legislation.
 affiliated with Rep. Scott's office. See [`/about`](src/routes/About.tsx)
 and [`/accessibility`](src/routes/Accessibility.tsx) in the app.
 
-## Status: Phase 2 of 6 (resource directory)
+## Status: Phases 1–4 done and deployed; Phase 5 deferred
 
-See [Build order](#build-order) below. The app now has:
+See [Build order](#build-order) below.
 
 - **Phase 1** — app shell, full-IA routing, WCAG-tuned Tailwind design
-  system, Amplify Gen 2 `auth` + `data` definitions.
-- **Phase 2** — the resource directory: `Resource` / `ResourceCategory` /
-  `GuidedSession` data models, a ~30-entry verified Georgia seed catalog
-  (`src/data/resources.seed.ts`), the faceted `/resources` list, and
-  `/resources/:slug` detail pages. Works fully offline against the seed;
-  reads the live backend when one is deployed.
+  system, Amplify Gen 2 `auth` + `data`.
+- **Phase 2** — the resource directory: faceted `/resources` +
+  `/resources/:slug`, backed by a ~30-entry verified Georgia catalog.
+- **Phase 3** — AI Guided Help at `/guide`, Bedrock-backed triage grounded
+  in the catalog, with a deterministic offline engine as the fallback.
+- **Phase 4** — Amazon Connect chat + in-browser WebRTC voice at `/help`,
+  fronted by a Lex bot whose answers come from the same catalog.
+- **Phase 5** — representative section: **deferred**, not started.
+  `/representative*` are still placeholders.
 
-**No AWS resources have been deployed** — see
-[What's real vs. stubbed](#whats-real-vs-stubbed).
+**Deployed and verified end-to-end** in AWS account `352223710766`
+(`us-east-1`) on 2026-09-08: a real browser chat reaches the Lex bot, the
+fulfillment Lambda retrieves from DynamoDB, Bedrock writes a grounded
+answer naming real catalog resources, and "talk to a person" routes to a
+queue. Provisioned ids are in [docs/connect-setup.md](docs/connect-setup.md).
+
+This is a **sandbox** deployment (`ampx sandbox`), not production — there
+is no Amplify Hosting connection yet.
 
 ## Tech stack
 
@@ -103,8 +112,8 @@ vector-store choice.
 1. ✅ **Scaffold** — Vite+React+TS app, Amplify Gen 2 backend skeleton.
 2. ✅ **Resource directory** — `Resource`/`ResourceCategory`/`GuidedSession` models, ~30-entry verified Georgia seed catalog, faceted `/resources` list + `/resources/:slug` detail, URL-synced filters. *(Pause for review after this phase.)*
 3. ✅ **AI Guided Help** — `/guide` conversational wizard, `guidedTriage` Bedrock Lambda + custom query, grounded lexical retrieval over the catalog, deterministic offline engine, distress → 988 hand-off, anonymous `GuidedSession` logging.
-4. ✅ **Amazon Connect** — `/help` live-support hub, custom `amazon-connect-chatjs` chat widget (+ hosted-widget fallback), in-browser WebRTC voice (`amazon-chime-sdk-js`), `connect-contact` + `lex-fulfillment` Lambdas, `startSupportContact` mutation, exported contact flow + Lex bot (`docs/connect-flows/`), and the `docs/connect-setup.md` runbook. **Instance not provisioned** (cost gate). *Code-only-unverified — see the note below.* *(Pause for review after this phase.)*
-5. ⬜ **Representative section** — seed content, Congress.gov sync, Bedrock plain-language bill summaries, legislation/initiatives pages.
+4. ✅ **Amazon Connect** — `/help` live-support hub, custom `amazon-connect-chatjs` chat widget (+ hosted-widget fallback), in-browser WebRTC voice (`amazon-chime-sdk-js`), `connect-contact` + `lex-fulfillment` Lambdas, `startSupportContact` mutation, exported contact flow + Lex bot (`docs/connect-flows/`), and the `docs/connect-setup.md` runbook. **Provisioned and verified live** — real browser chat → Lex → Bedrock → grounded answer → queue hand-off.
+5. ⏸️ **Representative section — DEFERRED**, not started. Seed content, Congress.gov sync, Bedrock plain-language bill summaries, legislation/initiatives pages. `/representative*` remain placeholders; needs a free Congress.gov API key.
 6. ⬜ **Accessibility, performance, docs** — axe pass, Lighthouse, final docs.
 
 ## What's real vs. stubbed
@@ -114,16 +123,17 @@ vector-store choice.
 - **Resource directory** — `/resources` faceted search (category, who-it's-for, channel, language, GA-08 county) with live facet counts, URL-synced shareable filters, `aria-live` result count, mobile filter toggle; `/resources/:slug` detail pages with contact channels, official-site links, related resources, and a "confirm with the agency" trust note.
 - **Seed catalog** — ~30 real Georgia programs in `src/data/resources.seed.ts`, each with a `lastVerified` date; unconfirmed details carry inline `// VERIFY:` notes. The frontend reads this array directly in offline mode and the live `Resource` table when a backend is deployed (`src/lib/resourceCatalog.ts`).
 - **AI Guided Help** — `/guide` asks 4–5 plain-language questions (large chips + free-text, progress bar, "I'm not sure", Back), then shows a ranked shortlist with a "why this fits" line and a next step per item, plus an always-offered "talk to a person" hand-off. A keyword screen routes anyone in distress straight to 988 / the Georgia Crisis & Access Line instead of triaging. Every recommendation is a real catalog row — the flow never invents a program, phone, or URL. Runs a deterministic offline engine now; calls the Bedrock Lambda automatically once a backend is deployed.
-- **Live support (`/help`)** — a support hub with hours, "what to expect", an accessible custom chat widget (transcript `role="log"`/`aria-live`, labelled input, typing indicator), and an accessible "Call for help from your browser" WebRTC button (mic-permission messaging, connecting/ringing/connected states, mute with `aria-pressed`, a visible mm:ss timer, End call). Backed by `connect-contact` (StartChatContact / StartWebRTCContact) and `lex-fulfillment` (intent → retrieval → grounded Bedrock answer; distress → 988; "talk to a person" → topic-routed queue). Until the Connect instance is provisioned, `/help` shows a "not connected — dial 2-1-1" state.
-- Amplify Gen 2 `auth` (Cognito, `admin` group), `data` (`Resource` / `ResourceCategory` / `GuidedSession` + `guidedTriage` query + `startSupportContact` mutation), `amplify/seed/seed.ts`, and `amplify/functions/{guided-triage,connect-contact,lex-fulfillment}` with least-privilege IAM in `backend.ts` — valid code, **not yet deployed**.
+- **Live support (`/help`)** — a support hub with hours, "what to expect", an accessible custom chat widget (transcript `role="log"`/`aria-live`, labelled input, typing indicator), and an accessible "Call for help from your browser" WebRTC button (mic-permission messaging, connecting/ringing/connected states, mute with `aria-pressed`, a visible mm:ss timer, End call). Backed by `connect-contact` (StartChatContact / StartWebRTCContact) and `lex-fulfillment` (intent → retrieval → grounded Bedrock answer; distress → 988; "talk to a person" → topic-routed queue). **Verified live in a browser.** If the Connect env vars are unset, `/help` degrades to a "not connected — dial 2-1-1" state rather than showing a broken widget.
+- Amplify Gen 2 `auth` (Cognito, `admin` group), `data` (`Resource` / `ResourceCategory` / `GuidedSession` + `guidedTriage` query + `startSupportContact` mutation), `amplify/seed/seed.ts`, and `amplify/functions/{guided-triage,connect-contact,lex-fulfillment}` with least-privilege IAM in `backend.ts` — **deployed to a sandbox and exercised end-to-end**.
 - `docs/connect-flows/inbound-flow.json` (importable Connect flow) + `docs/connect-flows/lex-bot.json` (GA08SupportBot design) + `docs/connect-setup.md` (step-by-step runbook incl. the no-AWS-keys-client-side credential path).
 - Offline-mode detection so the app never silently pretends to be connected to a backend it isn't.
 - Tests (~63): `resourceFilters`, `guidedTriage/{safety,retrieval,localEngine}`, `connect/{voiceSession,config,lexIntentMap}`, and route tests for `/resources`, `/resources/:slug`, `/guide` including `jest-axe` checks.
 
 **Stubbed (placeholder UI, no backend yet):**
 - `/representative`, `/representative/legislation`, `/representative/initiatives` — placeholders; real content + Congress.gov sync lands Phase 5.
-- The **live Bedrock/Connect paths** are authored but unexercised — no sandbox and no Connect instance are deployed. `/guide` uses the deterministic offline engine; `/help` shows the "not connected" state. `BEDROCK_MODEL_ID` (`// VERIFY:` in the handlers) must be confirmed against the current Bedrock catalog before deploy.
-- The **live Connect paths are unexercised** — no Connect instance is provisioned, so `/help` shows the "not connected" state. Verified in the browser that both the unconfigured state and (with the flags on) the chat/voice launchers render, and that starting a chat with no backend degrades to the 2-1-1 message rather than a broken widget.
+- **Sandbox only.** The deployment is `ampx sandbox`, not production: no Amplify Hosting connection, no custom domain, no CI/CD. `amplify_outputs.json` is committed and holds a real (public, browser-shipped) AppSync API key — fine for a sandbox, but gitignore it before this repo goes anywhere public.
+- **No human agents are staffed.** "Talk to a person" transfers to the `General Help` / `Veterans` / `Housing` queues, but nobody is signed into the Contact Control Panel, so a hand-off currently lands in the queue and then hits the "all our helpers are busy — dial 2-1-1" path.
+- **Voice is verified at the API level, not by a real call.** `StartWebRTCContact` returns a valid Chime meeting + attendee, and the call state machine is unit-tested, but no human has actually spoken through a browser call yet.
 
 **Not started:** `amplify/functions/congress-sync`; `Legislator`/`Bill`/`Initiative` models + seed; Amplify Hosting connection; Lighthouse pass; i18n runtime library (strings are externalised in `src/i18n/en/`, ready for it).
 
