@@ -50,6 +50,18 @@ const CATEGORY_VALUES = [
 ] as const;
 
 const schema = a.schema({
+  /**
+   * Top-level named enum, referenced with a.ref() below.
+   *
+   * It must NOT be declared inline on `Resource.category`: an inline
+   * a.enum() generates a GraphQL enum named <Model><Field> — i.e.
+   * "ResourceCategory" — which collides with the ResourceCategory model
+   * ("There can be only one type named ResourceCategory" at schema
+   * validation). Hoisting it under a distinct name keeps both the model
+   * name and real enum validation.
+   */
+  CategoryKey: a.enum(CATEGORY_VALUES),
+
   Resource: a
     .model({
       slug: a.string().required(),
@@ -58,7 +70,7 @@ const schema = a.schema({
       summary: a.string().required(),
       /** Fuller description: who runs it, what you get, how it works. */
       description: a.string().required(),
-      category: a.enum(CATEGORY_VALUES),
+      category: a.ref("CategoryKey"),
       level: a.enum(["STATE", "FEDERAL", "LOCAL"]),
       agency: a.string().required(),
       eligibilitySummary: a.string().required(),
@@ -90,7 +102,15 @@ const schema = a.schema({
 
   ResourceCategory: a
     .model({
-      key: a.enum(CATEGORY_VALUES),
+      /**
+       * One of CATEGORY_VALUES. Typed as a required string, NOT a.enum():
+       * Amplify enum fields can't be `.required()`, and an identifier must
+       * reference a required or DB-generated field — `.identifier(["key"])`
+       * on an enum fails at CDK synth with InvalidSchemaError. The allowed
+       * values are enforced by src/lib/categories.ts (the taxonomy's source
+       * of truth) and by the seed script that writes these rows.
+       */
+      key: a.string().required(),
       /** Plain-language label shown to citizens, e.g. "Food help". */
       label: a.string().required(),
       description: a.string().required(),
@@ -122,7 +142,9 @@ const schema = a.schema({
     .authorization((allow) => [
       // Anonymous visitors may LOG a session but never read one back.
       allow.publicApiKey().to(["create"]),
-      allow.group("admin").to(["read", "list", "delete"]),
+      // "read" already covers get/list/search/listen/sync — naming both
+      // "read" and "list" is rejected as an InvalidDirectiveError.
+      allow.group("admin").to(["read", "delete"]),
     ]),
 
   /**

@@ -21,6 +21,11 @@ import { defineFunction } from "@aws-amplify/backend";
 export const guidedTriage = defineFunction({
   name: "guided-triage",
   entry: "./handler.ts",
+  // Placed in the DATA nested stack. This function is a data resolver (the
+  // `guidedTriage` custom query) AND reads the Resource table, so leaving it
+  // in the default function stack makes data -> function -> data, which
+  // CloudFormation rejects as a circular dependency between nested stacks.
+  resourceGroupName: "data",
   timeoutSeconds: 60,
   memoryMB: 512,
   environment: {

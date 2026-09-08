@@ -21,6 +21,10 @@ import { defineFunction } from "@aws-amplify/backend";
 export const lexFulfillment = defineFunction({
   name: "lex-fulfillment",
   entry: "./handler.ts",
+  // Not a data resolver (Lex invokes it directly), but it reads the Resource
+  // table, so keep it in the data stack too — that keeps every data
+  // dependency inside one stack instead of crossing nested-stack boundaries.
+  resourceGroupName: "data",
   timeoutSeconds: 30,
   memoryMB: 512,
   environment: {

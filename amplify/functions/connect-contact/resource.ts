@@ -22,6 +22,9 @@ import { defineFunction } from "@aws-amplify/backend";
 export const connectContact = defineFunction({
   name: "connect-contact",
   entry: "./handler.ts",
+  // Data resolver for the `startSupportContact` mutation — must live in the
+  // data nested stack (see guided-triage/resource.ts for why).
+  resourceGroupName: "data",
   timeoutSeconds: 30,
   memoryMB: 256,
   environment: {
