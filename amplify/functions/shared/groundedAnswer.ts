@@ -14,10 +14,11 @@ import type { CivicResource } from "../../../src/lib/resourceTypes";
  * Returns null on any failure so the caller can fall back to a plain
  * templated reply.
  *
- * // VERIFY: BEDROCK_MODEL_ID default — confirm against the current
- * Bedrock model catalog and your account's model access before deploy.
+ * Model id VERIFIED 2026-09-08 in us-east-1 (ACTIVE inference profile +
+ * live Converse call). No date/version suffix — see the note in
+ * amplify/functions/guided-triage/handler.ts. Override with BEDROCK_MODEL_ID.
  */
-const DEFAULT_MODEL_ID = "us.anthropic.claude-sonnet-5-20250929-v1:0";
+const DEFAULT_MODEL_ID = "us.anthropic.claude-sonnet-5";
 
 const SYSTEM = `
 You are the voice/chat guide for the GA-08 Civic Resource Hub. Answer the caller's question in 2-3 short sentences, plain language (6th-8th grade), warm and neutral.
@@ -60,7 +61,9 @@ export async function composeGroundedAnswer(
             ],
           },
         ],
-        inferenceConfig: { maxTokens: 350, temperature: 0.3 },
+        // No `temperature`: sampling params are REMOVED on Claude Sonnet 5
+        // and return a ValidationException. Verified live 2026-09-08.
+        inferenceConfig: { maxTokens: 350 },
       }),
     );
     const text = (res.output?.message?.content ?? [])

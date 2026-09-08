@@ -51,12 +51,14 @@ import { TRIAGE_SYSTEM_PROMPT } from "./triagePrompt";
 
 const REGION = process.env.AWS_REGION ?? "us-east-1";
 
-// // VERIFY: confirm this id (and that your account has access to it in
-// REGION) against the current Bedrock model catalog before deploying —
-// https://docs.aws.amazon.com/bedrock/latest/userguide/models-supported.html
-// Use the "us." cross-region inference profile in US regions. Override
-// with the BEDROCK_MODEL_ID environment variable / Amplify secret.
-const DEFAULT_MODEL_ID = "us.anthropic.claude-sonnet-5-20250929-v1:0";
+// VERIFIED 2026-09-08 against this account in us-east-1: listed by
+// `aws bedrock list-inference-profiles` (ACTIVE) and exercised with a live
+// Converse call, including tool use with toolChoice {any:{}}. Note the id
+// has NO date/version suffix — Sonnet 5 differs from Sonnet 4.5's
+// `us.anthropic.claude-sonnet-4-5-20250929-v1:0` pattern. Newer Claude
+// models are INFERENCE_PROFILE-only on Bedrock, so the "us." prefix is
+// required. Override per environment with BEDROCK_MODEL_ID.
+const DEFAULT_MODEL_ID = "us.anthropic.claude-sonnet-5";
 const MODEL_ID = process.env.BEDROCK_MODEL_ID || DEFAULT_MODEL_ID;
 
 const bedrock = new BedrockRuntimeClient({ region: REGION });
@@ -229,7 +231,10 @@ async function runModel(
       modelId: MODEL_ID,
       system: [{ text: TRIAGE_SYSTEM_PROMPT }],
       messages,
-      inferenceConfig: { maxTokens: 1200, temperature: 0.2 },
+      // No `temperature`/`topP`/`topK`: sampling parameters are REMOVED on
+      // Claude Sonnet 5 and return a ValidationException
+      // ("`temperature` is deprecated for this model"). Verified live.
+      inferenceConfig: { maxTokens: 1200 },
       toolConfig: { tools: TOOLS, toolChoice: { any: {} } },
     }),
   );
