@@ -24,6 +24,15 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // Bind IPv4 loopback explicitly. Left to its default, Vite bound only
+    // to IPv6 ([::1]) on this machine, so any browser that resolved
+    // "localhost" to 127.0.0.1 first got ERR_CONNECTION_REFUSED while the
+    // server was happily running. Loopback-only — not exposed to the LAN
+    // (use `--host` on the CLI if you ever need that deliberately).
+    host: "127.0.0.1",
+    // Fail loudly instead of silently sliding to 5174 if the port is busy —
+    // a "site can't be reached" on 5173 is otherwise very confusing.
+    strictPort: true,
   },
   test: {
     environment: "jsdom",
