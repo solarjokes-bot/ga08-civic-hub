@@ -12,6 +12,7 @@ import ComingSoon from "@/routes/ComingSoon";
 const Resources = lazy(() => import("@/routes/Resources"));
 const ResourceDetail = lazy(() => import("@/routes/ResourceDetail"));
 const Guide = lazy(() => import("@/routes/Guide"));
+const Help = lazy(() => import("@/routes/Help"));
 const NotFound = lazy(() => import("@/routes/NotFound"));
 
 function Loading() {
@@ -36,16 +37,7 @@ export default function App() {
           <Route path="resources" element={<Resources />} />
           <Route path="resources/:slug" element={<ResourceDetail />} />
           <Route path="guide" element={<Guide />} />
-          <Route
-            path="help"
-            element={
-              <ComingSoon
-                title="Chat or Call for Help"
-                phase="Phase 4 — planned"
-                description="Live chat and free browser-based calling (no phone dialing needed) are coming in the next phase, powered by Amazon Connect."
-              />
-            }
-          />
+          <Route path="help" element={<Help />} />
           <Route
             path="representative"
             element={

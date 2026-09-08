@@ -1,5 +1,6 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 import { guidedTriage } from "../functions/guided-triage/resource";
+import { connectContact } from "../functions/connect-contact/resource";
 
 /**
  * Amplify Data (AppSync + DynamoDB) — Gen 2, code-first schema.
@@ -137,6 +138,26 @@ const schema = a.schema({
     .arguments({ answers: a.json() })
     .returns(a.json())
     .handler(a.handler.function(guidedTriage))
+    .authorization((allow) => [allow.publicApiKey()]),
+
+  /**
+   * Live support hand-off (Phase 4). Starts an Amazon Connect CHAT or
+   * WebRTC VOICE contact server-side and returns only the short-lived
+   * tokens the browser needs — no AWS credentials ever reach the client.
+   * Anonymous (public API key). Handler: amplify/functions/connect-contact/.
+   * Returns { ok: false, reason: "not_configured" } until the Connect
+   * instance env vars are set (see docs/connect-setup.md); the UI
+   * degrades gracefully.
+   */
+  startSupportContact: a
+    .mutation()
+    .arguments({
+      channel: a.string().required(), // "CHAT" | "VOICE"
+      displayName: a.string(),
+      topic: a.string(),
+    })
+    .returns(a.json())
+    .handler(a.handler.function(connectContact))
     .authorization((allow) => [allow.publicApiKey()]),
 });
 

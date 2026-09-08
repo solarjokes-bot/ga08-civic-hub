@@ -1,6 +1,6 @@
 # Architecture
 
-Status: **Phase 3 (AI Guided Help)**. This document describes the target
+Status: **Phase 4 (Amazon Connect)**. This document describes the target
 end-state architecture from the project spec. Components not yet built
 are marked *(planned)*; see [../README.md](../README.md) for the
 authoritative "what's real vs. stubbed" status as of the latest commit.
@@ -11,8 +11,8 @@ authoritative "what's real vs. stubbed" status as of the latest commit.
 flowchart TB
     subgraph Browser["Citizen's Browser"]
         SPA["React + Vite SPA\n(React Router, Zustand)"]
-        ChatWidget["Connect Chat widget\n(amazon-connect-chatjs)\n(planned)"]
-        VoiceWidget["Web voice button\n(amazon-connect-streams)\n(planned)"]
+        ChatWidget["Chat widget\n(amazon-connect-chatjs,\ncustom or hosted)"]
+        VoiceWidget["Web voice button\n(amazon-chime-sdk-js\nWebRTC)"]
     end
 
     subgraph Amplify["AWS Amplify Gen 2"]
@@ -23,8 +23,9 @@ flowchart TB
     end
 
     subgraph Functions["Amplify Functions (Lambda)"]
-        Triage["guided-triage\n(built, Phase 3 —\nnot yet deployed)"]
-        LexFulfill["lex-fulfillment\n(planned, Phase 4)"]
+        Triage["guided-triage\n(built, P3 — not deployed)"]
+        LexFulfill["lex-fulfillment\n(built, P4 — not deployed)"]
+        ConnectContact["connect-contact\n(Start*Contact broker,\nbuilt, P4 — not deployed)"]
         CongressSync["congress-sync\n(scheduled, planned, Phase 5)"]
     end
 
@@ -33,11 +34,11 @@ flowchart TB
         KB["Dev-tier retrieval:\nlexical scorer over the\nResource table —\nno vector store\n(KNOWLEDGE_BASE_ID hook\nfor a later swap)"]
     end
 
-    subgraph Connect["Amazon Connect (planned, Phase 4)"]
-        LexBot["Lex V2 bot"]
-        ContactFlow["Contact flow"]
-        Queues["Queues + routing profile"]
-        Agent["Human agent"]
+    subgraph Connect["Amazon Connect (instance not provisioned)"]
+        LexBot["Lex V2 bot\n(GA08SupportBot)"]
+        ContactFlow["Inbound contact flow"]
+        Queues["Queues:\nGeneral Help / Veterans / Housing"]
+        Agent["Human agent (staff)"]
     end
 
     External["Congress.gov API\n(api.congress.gov)\n(planned, Phase 5)"]
@@ -51,11 +52,17 @@ flowchart TB
     Triage --> KB
     Triage -- "read Resource table" --> DDB
 
-    ChatWidget --> LexBot
-    VoiceWidget --> LexBot
-    LexBot --> LexFulfill
+    SPA -- "startSupportContact\nmutation (API key)" --> AppSync
+    AppSync -- "resolver" --> ConnectContact
+    ConnectContact -- "StartChatContact /\nStartWebRTCContact" --> ContactFlow
+    ConnectContact -- "tokens only" --> ChatWidget
+    ConnectContact -- "Chime meeting/attendee" --> VoiceWidget
+    ChatWidget -- "chatjs" --> ContactFlow
+    VoiceWidget -- "WebRTC (Chime SDK)" --> ContactFlow
+    ContactFlow --> LexBot
+    LexBot -- "fulfillment hook" --> LexFulfill
     LexFulfill --> Claude
-    LexBot --> ContactFlow
+    LexFulfill -- "read Resource table" --> DDB
     ContactFlow --> Queues
     Queues --> Agent
 
@@ -66,7 +73,7 @@ flowchart TB
     Hosting -.->|"builds & deploys"| SPA
 ```
 
-## Status (Phases 1–3)
+## Status (Phases 1–4)
 
 - ✅ Vite + React 18 + TypeScript app shell, React Router, Tailwind v4,
   Zustand wired.
@@ -90,8 +97,21 @@ flowchart TB
   `guidedTriage` custom query (public API-key auth) routes to the
   `amplify/functions/guided-triage` Lambda; the frontend calls the
   deterministic offline engine instead when no backend is deployed.
-- ⛔ **Not deployed.** No sandbox has been provisioned in this session —
-  see README "Deploy" section for the command to run yourself.
+- ✅ **Amazon Connect chat + web voice** (`/help`). Code + IaC + the
+  console runbook are complete; the Connect **instance is not
+  provisioned** (real monthly cost — needs owner go-ahead). See the data
+  flow below and `docs/connect-setup.md`. `connect-contact` +
+  `lex-fulfillment` Lambdas, the `startSupportContact` mutation, the
+  contact flow / Lex bot exports (`docs/connect-flows/`), and the
+  accessible chat + WebRTC voice widgets all exist. `/help` degrades to a
+  "not connected — dial 2-1-1" state until the env vars are set.
+- ⛔ **Not deployed.** No sandbox or Connect instance has been
+  provisioned — see README "Deploy" and `docs/connect-setup.md`.
+- ⚠️ **Phase 4 is code-only-unverified.** The portable Node.js used for
+  Phases 1–3 was removed from the build machine, so `tsc`/`eslint`/
+  `vitest`/`vite build` could not be run and `package-lock.json` is not
+  regenerated. Once Node is back: `npm install && npm test && npm run
+  build` (use `npm install`, not `npm ci`).
 
 ## Guided triage data flow (Phase 3)
 
@@ -132,7 +152,46 @@ Key properties:
 - **Consistent.** The offline engine and the Lambda share the question
   ladder, profile assembly, retrieval, and safety modules
   (`src/lib/guidedTriage/*`, import-light so the Lambda can reuse them),
-  so chat/voice in Phase 4 can reuse the same brain.
+  so chat/voice reuse the same brain.
+
+## Live support data flow (Phase 4)
+
+```
+                            /help page  (src/routes/Help.tsx)
+   chatMode() / voiceOffered() decide what to OFFER; a real contact
+   only starts when a backend is deployed + the Connect env vars are set.
+        │
+        ├─ CHAT ──► startSupportContact("CHAT")  ──► AppSync mutation ──► connect-contact Lambda
+        │                                                                    │ connect:StartChatContact
+        │            { ok:true, chat:{ contactId, participantId,  ◄──────────┘  (instance-scoped role)
+        │              participantToken, region } }
+        │                        │
+        │            amazon-connect-chatjs  ChatSession.create({type:"CUSTOMER"}).connect()
+        │                        │
+        │            <ChatPanel> (role="log" aria-live, labelled input, typing indicator, end)
+        │
+        └─ VOICE ─► startSupportContact("VOICE") ──► connect-contact Lambda ─ connect:StartWebRTCContact
+                     { ok:true, voice:{ ..., connectionData:{ Meeting, Attendee } } }
+                                 │
+                     VoiceCallController (pure state machine: idle→requesting-mic→
+                       connecting→ringing→connected→ended/error) + amazon-chime-sdk-js
+                       (getUserMedia → DefaultMeetingSession → audioVideo.start())
+                                 │
+                     <VoiceCallPanel> (polite status live region, mute w/ aria-pressed,
+                       visible mm:ss timer, End call). No PSTN, no phone number.
+
+   Both channels enter the SAME inbound contact flow (docs/connect-flows/inbound-flow.json):
+     greet → check hours → Lex bot (GA08SupportBot) → lex-fulfillment Lambda
+       (intent → category → retrieval over Resource table → Bedrock grounded 2-3 sentence
+        answer; distress → 988/GCAL with no model call; "talk to a person" → set
+        handoff + routeToQueue session attributes)
+     → on hand-off: set working queue (General Help / Veterans / Housing) → transfer to queue
+     → outside hours / queue full → message pointing to 2-1-1 → disconnect.
+```
+
+The browser holds only per-contact tokens (chat) or a Chime meeting +
+attendee join token (voice), both of which expire with the contact.
+There is no AWS signing in the client and nothing long-lived.
 
 ## Key decisions & deviations from the spec, with rationale
 
@@ -155,6 +214,25 @@ Key properties:
 - **No end-user accounts.** Cognito is used only for the `admin` group
   (catalog editors). Citizens never sign in — this matches the
   anonymous-by-default privacy requirement for guided help.
+- **Web voice uses the Amazon Chime SDK, not `amazon-connect-streams`
+  (Phase 4).** The spec names `amazon-connect-streams` for web voice, but
+  that library is the *agent* side (it embeds the Contact Control Panel).
+  The *customer* side of Amazon Connect in-app/web calling is
+  `StartWebRTCContact` + `amazon-chime-sdk-js` — the API literally
+  returns a Chime `Meeting` + `Attendee`. `amazon-connect-streams` was
+  removed from `package.json`; `amazon-connect-chatjs` stays (chat). Add
+  `amazon-connect-streams` back only if you build a custom in-browser
+  agent CCP later.
+- **Chat widget: custom by default, hosted as a one-flag fallback
+  (Phase 4).** The custom `amazon-connect-chatjs` widget is preferred so
+  it matches the site's styling and accessibility work. Setting
+  `VITE_CONNECT_USE_HOSTED_WIDGET=true` (+ snippet id/URL) switches to
+  the zero-code hosted Amazon Connect widget instead.
+- **No Connect instance provisioned (Phase 4).** A Connect instance has
+  no base fee but bills per chat message / voice minute, and a claimed
+  phone number is ~$1–$25/mo (web voice needs none). Per the ground
+  rules this needs explicit go-ahead. All code + IaC + the runbook are
+  done; `/help` degrades gracefully until the instance exists.
 
 ## IAM / security notes (expanded as functions are added)
 
@@ -171,6 +249,16 @@ Key properties:
   browser never calls Bedrock directly — it calls the AppSync
   `guidedTriage` query with the public API key; the Lambda holds the
   Bedrock credentials.
+- **`lex-fulfillment`** (Phase 4): same Bedrock grant as `guided-triage`
+  + read-only on the `Resource` table. Lex invokes it directly (not via
+  AppSync), so `amplify/backend.ts` adds a resource-based
+  `lambda:InvokeFunction` permission for `lexv2.amazonaws.com` —
+  // LIVE SETUP: tighten `sourceArn` to the bot-alias ARN after import.
+- **`connect-contact`** (Phase 4): exactly `connect:StartChatContact` +
+  `connect:StartWebRTCContact`, scoped to
+  `arn:aws:connect:*:ACCT:instance/*` (// LIVE SETUP: narrow to the real
+  instance ARN). No Bedrock, no data access. It returns only short-lived
+  per-contact tokens to the browser.
 - Bedrock `InvokeModel`/`InvokeModelWithResponseStream` permissions are
   scoped to the specific model ID(s) actually used, not `bedrock:*`.
 - `CONGRESS_GOV_API_KEY` and any Connect-related secrets are stored as

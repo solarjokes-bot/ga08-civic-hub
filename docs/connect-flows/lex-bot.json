@@ -1,0 +1,243 @@
+{
+  "_comment": [
+    "GA08SupportBot — Amazon Lex V2 bot definition for the chat/voice front door.",
+    "",
+    "Lex V2's native import format is a ZIP of many files (Manifest.json, Bot.json,",
+    "BotLocales/en_US/BotLocale.json, Intents/<Name>/Intent.json, ...). This single",
+    "file is the DESIGN SPEC for that bot in one place. Recreate it one of two ways:",
+    "",
+    "  A) Console: Lex -> Bots -> Create bot -> add each intent below with its",
+    "     sampleUtterances, then set every intent's Fulfillment Lambda to the",
+    "     `lex-fulfillment` function.",
+    "  B) CLI: `aws lexv2-models create-bot` + `create-bot-locale` +",
+    "     `create-intent` (one per entry in `intents`) + `create-slot` for the",
+    "     optional `county` slot + `build-bot-locale`.",
+    "",
+    "Intent names MUST match amplify/functions/lex-fulfillment/intentMap.ts.",
+    "The fulfillment Lambda does all the work (category -> retrieval -> Bedrock",
+    "grounded answer, distress -> 988, TalkToAgent -> set handoff/routeToQueue",
+    "session attributes). Slots are intentionally minimal — the Lambda reads the",
+    "raw transcript."
+  ],
+  "bot": {
+    "name": "GA08SupportBot",
+    "description": "Front door for the GA-08 Civic Resource Hub chat and web voice.",
+    "roleArn": "REPLACE_WITH_LEX_SERVICE_LINKED_ROLE_ARN",
+    "dataPrivacy": { "childDirected": false },
+    "idleSessionTTLInSeconds": 300
+  },
+  "locale": {
+    "localeId": "en_US",
+    "description": "US English",
+    "nluIntentConfidenceThreshold": 0.4,
+    "voiceSettings": { "voiceId": "Joanna", "engine": "neural" }
+  },
+  "fulfillmentLambda": {
+    "note": "Set as the Fulfillment code hook on EVERY intent below.",
+    "arnPlaceholder": "REPLACE_WITH_LEX_FULFILLMENT_LAMBDA_ARN"
+  },
+  "intents": [
+    {
+      "name": "HousingHelp",
+      "sampleUtterances": [
+        "I need help with rent",
+        "I'm about to be evicted",
+        "help paying my power bill",
+        "I have nowhere to stay",
+        "housing assistance",
+        "section 8",
+        "help with my utility bill",
+        "I can't pay my light bill"
+      ],
+      "fulfillmentCodeHook": { "enabled": true }
+    },
+    {
+      "name": "FoodHelp",
+      "sampleUtterances": [
+        "I need food",
+        "how do I get food stamps",
+        "apply for SNAP",
+        "where is a food pantry",
+        "food for my kids",
+        "WIC",
+        "my family is hungry"
+      ],
+      "fulfillmentCodeHook": { "enabled": true }
+    },
+    {
+      "name": "HealthCoverageHelp",
+      "sampleUtterances": [
+        "I need health insurance",
+        "how do I apply for Medicaid",
+        "health coverage for my children",
+        "PeachCare",
+        "I need to see a doctor and have no insurance",
+        "find a clinic"
+      ],
+      "fulfillmentCodeHook": { "enabled": true }
+    },
+    {
+      "name": "MentalHealthHelp",
+      "sampleUtterances": [
+        "I need to talk to someone",
+        "I'm struggling with my mental health",
+        "counseling",
+        "help with addiction",
+        "substance use help",
+        "I feel overwhelmed"
+      ],
+      "fulfillmentCodeHook": { "enabled": true }
+    },
+    {
+      "name": "VeteransHelp",
+      "sampleUtterances": [
+        "I'm a veteran and need help",
+        "VA benefits",
+        "help with a VA claim",
+        "veteran health care",
+        "I'm a military family member"
+      ],
+      "fulfillmentCodeHook": { "enabled": true }
+    },
+    {
+      "name": "JobHelp",
+      "sampleUtterances": [
+        "I need a job",
+        "help finding work",
+        "I got laid off",
+        "job training",
+        "file for unemployment",
+        "I want to get my GED"
+      ],
+      "fulfillmentCodeHook": { "enabled": true }
+    },
+    {
+      "name": "SeniorHelp",
+      "sampleUtterances": [
+        "help for my elderly mother",
+        "senior services",
+        "meals for an older adult",
+        "in home care",
+        "Medicare help",
+        "I'm a caregiver"
+      ],
+      "fulfillmentCodeHook": { "enabled": true }
+    },
+    {
+      "name": "DisabilityHelp",
+      "sampleUtterances": [
+        "I have a disability and need help",
+        "disability benefits",
+        "SSI",
+        "help finding work with a disability",
+        "vocational rehabilitation"
+      ],
+      "fulfillmentCodeHook": { "enabled": true }
+    },
+    {
+      "name": "ChildFamilyHelp",
+      "sampleUtterances": [
+        "help paying for child care",
+        "family services",
+        "help with my kids",
+        "child support services",
+        "daycare assistance"
+      ],
+      "fulfillmentCodeHook": { "enabled": true }
+    },
+    {
+      "name": "LegalHelp",
+      "sampleUtterances": [
+        "I need a lawyer",
+        "free legal help",
+        "legal aid",
+        "I have a court problem",
+        "help with a landlord dispute"
+      ],
+      "fulfillmentCodeHook": { "enabled": true }
+    },
+    {
+      "name": "TaxHelp",
+      "sampleUtterances": [
+        "free tax help",
+        "help filing my taxes",
+        "where can I get my taxes done",
+        "tax questions"
+      ],
+      "fulfillmentCodeHook": { "enabled": true }
+    },
+    {
+      "name": "DisasterHelp",
+      "sampleUtterances": [
+        "my house was damaged in a storm",
+        "disaster help",
+        "hurricane recovery",
+        "flood assistance",
+        "FEMA"
+      ],
+      "fulfillmentCodeHook": { "enabled": true }
+    },
+    {
+      "name": "BusinessFarmHelp",
+      "sampleUtterances": [
+        "help starting a small business",
+        "small business loan",
+        "farm loan",
+        "help for my farm",
+        "crop disaster assistance"
+      ],
+      "fulfillmentCodeHook": { "enabled": true }
+    },
+    {
+      "name": "IdVotingHelp",
+      "sampleUtterances": [
+        "I need a state ID",
+        "driver's license help",
+        "how do I register to vote",
+        "where is my polling place",
+        "Real ID"
+      ],
+      "fulfillmentCodeHook": { "enabled": true }
+    },
+    {
+      "name": "TalkToAgent",
+      "sampleUtterances": [
+        "talk to a person",
+        "I want to speak to someone",
+        "agent",
+        "representative",
+        "can I talk to a real person",
+        "this isn't helping, get me a person",
+        "human"
+      ],
+      "fulfillmentCodeHook": { "enabled": true }
+    },
+    {
+      "name": "FallbackIntent",
+      "parentIntentSignature": "AMAZON.FallbackIntent",
+      "description": "Anything the specific intents don't catch -> the fulfillment Lambda interprets the free text (same keyword hints as the /guide wizard).",
+      "fulfillmentCodeHook": { "enabled": true }
+    }
+  ],
+  "optionalSlots": {
+    "note": "Not required. If you want Lex to collect county explicitly, add this as an optional slot on the topic intents.",
+    "county": {
+      "slotTypeName": "GA08County",
+      "slotType": {
+        "name": "GA08County",
+        "valueSelectionSetting": { "resolutionStrategy": "TopResolution" },
+        "slotTypeValues": [
+          { "sampleValue": { "value": "Bibb" } },
+          { "sampleValue": { "value": "Houston" } },
+          { "sampleValue": { "value": "Lowndes" } },
+          { "sampleValue": { "value": "Tift" } },
+          { "sampleValue": { "value": "Colquitt" } },
+          { "sampleValue": { "value": "Coffee" } },
+          { "sampleValue": { "value": "Ben Hill" } },
+          { "sampleValue": { "value": "Baldwin" } }
+        ],
+        "_comment": "Full GA-08 county list is in src/data/districtCounties.ts — add the rest before launch."
+      }
+    }
+  }
+}
