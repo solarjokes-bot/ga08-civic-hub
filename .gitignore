@@ -4,6 +4,7 @@ node_modules/
 # Build output
 dist/
 dist-ssr/
+deploy.zip
 *.local
 
 # Amplify Gen 2
