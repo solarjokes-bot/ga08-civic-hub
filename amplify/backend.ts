@@ -5,6 +5,7 @@ import { data } from "./data/resource";
 import { guidedTriage } from "./functions/guided-triage/resource";
 import { connectContact } from "./functions/connect-contact/resource";
 import { lexFulfillment } from "./functions/lex-fulfillment/resource";
+import { confirmAccount } from "./functions/confirm-account/resource";
 
 /**
  * Amplify Gen 2 backend entry point.
@@ -25,6 +26,7 @@ const backend = defineBackend({
   guidedTriage,
   connectContact,
   lexFulfillment,
+  confirmAccount,
 });
 
 const account = backend.stack.account;
@@ -94,6 +96,32 @@ const resourceTable = backend.data.resources.tables["Resource"];
         `arn:aws:connect:*:${account}:instance/*`,
         `arn:aws:connect:*:${account}:instance/*/contact/*`,
       ],
+    }),
+  );
+}
+
+// ───────────────────────── confirm-account ─────────────────────────
+// Confirms new username accounts server-side (there is no email to send a
+// code to). Scoped to exactly one Cognito action on exactly this pool.
+//
+// IMPORTANT: the pool id comes from an environment variable, NOT from
+// `backend.auth.resources.userPool`. Referencing the auth construct here
+// creates a cross-stack dependency that forces the auth nested stack to
+// update, which makes CloudFormation re-emit the Cognito pool Schema —
+// and Cognito rejects that on an existing pool with "Invalid
+// AttributeDataType" (a known CDK issue: `updated_at` is emitted as
+// Number). Keeping the reference out leaves the auth stack untouched.
+{
+  const fn = backend.confirmAccount.resources.lambda;
+  const poolId = process.env.USER_POOL_ID ?? "";
+  backend.confirmAccount.addEnvironment("USER_POOL_ID", poolId);
+  fn.addToRolePolicy(
+    new iam.PolicyStatement({
+      sid: "ConfirmNewUsernameAccounts",
+      actions: ["cognito-idp:AdminConfirmSignUp"],
+      resources: poolId
+        ? [`arn:aws:cognito-idp:${backend.stack.region}:${account}:userpool/${poolId}`]
+        : [`arn:aws:cognito-idp:${backend.stack.region}:${account}:userpool/*`],
     }),
   );
 }

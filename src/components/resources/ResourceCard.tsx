@@ -4,6 +4,7 @@ import { CHANNEL_ICON, CHANNEL_LABEL, CHANNEL_ORDER, STATEWIDE } from "@/lib/res
 import { languageLabel } from "@/lib/resourceTypes";
 import { resourcesStrings as S, fmt } from "@/i18n/en/resources";
 import { CategoryBadge } from "./CategoryBadge";
+import { SaveButton } from "@/components/account/SaveButton";
 
 function formatVerified(iso: string): string {
   if (!iso) return "";
@@ -76,6 +77,8 @@ export function ResourceCard({ resource }: { resource: CivicResource }) {
               date: formatVerified(resource.lastVerified),
             })}
           </p>
+          <div className="flex items-center gap-2">
+          <SaveButton slug={resource.slug} name={resource.name} />
           <Link
             to={`/resources/${resource.slug}`}
             className="whitespace-nowrap rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white no-underline hover:bg-primary-700"
@@ -83,6 +86,7 @@ export function ResourceCard({ resource }: { resource: CivicResource }) {
             {S.card.viewDetails}
             <span className="sr-only">: {resource.name}</span>
           </Link>
+          </div>
         </div>
       </article>
     </li>

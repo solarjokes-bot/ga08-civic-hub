@@ -12,6 +12,9 @@ const Resources = lazy(() => import("@/routes/Resources"));
 const ResourceDetail = lazy(() => import("@/routes/ResourceDetail"));
 const Guide = lazy(() => import("@/routes/Guide"));
 const Help = lazy(() => import("@/routes/Help"));
+const Apply = lazy(() => import("@/routes/Apply"));
+const Account = lazy(() => import("@/routes/Account"));
+const Saved = lazy(() => import("@/routes/Saved"));
 const NotFound = lazy(() => import("@/routes/NotFound"));
 
 function Loading() {
@@ -37,6 +40,9 @@ export default function App() {
           <Route path="resources/:slug" element={<ResourceDetail />} />
           <Route path="guide" element={<Guide />} />
           <Route path="help" element={<Help />} />
+          <Route path="apply" element={<Apply />} />
+          <Route path="account" element={<Account />} />
+          <Route path="saved" element={<Saved />} />
           <Route path="about" element={<About />} />
           <Route path="accessibility" element={<Accessibility />} />
 

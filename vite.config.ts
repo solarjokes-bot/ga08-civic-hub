@@ -23,7 +23,11 @@ export default defineConfig({
     sourcemap: true,
   },
   server: {
-    port: 5173,
+    // Take the port the harness assigns via PORT, so several dev servers
+    // can run side by side; fall back to 5173 when started by hand.
+    // Nothing here is tied to a fixed port: auth is Cognito SRP with no
+    // OAuth redirect URIs, and no webhooks point at localhost.
+    port: Number(process.env.PORT) || 5173,
     // Bind IPv4 loopback explicitly. Left to its default, Vite bound only
     // to IPv6 ([::1]) on this machine, so any browser that resolved
     // "localhost" to 127.0.0.1 first got ERR_CONNECTION_REFUSED while the

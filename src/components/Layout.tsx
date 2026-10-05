@@ -1,10 +1,12 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { DisclaimerBanner } from "./DisclaimerBanner";
 import { BackendStatusBanner } from "./BackendStatusBanner";
+import { AccountNav } from "@/components/account/AccountNav";
 
 const NAV_LINKS = [
   { to: "/resources", label: "Find a Resource" },
   { to: "/guide", label: "Not Sure What I Need" },
+  { to: "/apply", label: "Apply for Services" },
   { to: "/help", label: "Chat or Call" },
 ];
 
@@ -42,6 +44,7 @@ export function Layout() {
             </span>
           </NavLink>
 
+          <div className="flex flex-wrap items-center gap-1">
           <nav aria-label="Primary">
             <ul className="flex flex-wrap items-center gap-1">
               {NAV_LINKS.map((link) => (
@@ -53,6 +56,8 @@ export function Layout() {
               ))}
             </ul>
           </nav>
+          <AccountNav />
+          </div>
         </div>
       </header>
 

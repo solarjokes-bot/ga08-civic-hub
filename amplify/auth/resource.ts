@@ -2,19 +2,25 @@ import { defineAuth } from "@aws-amplify/backend";
 
 /**
  * Amplify Gen 2 Auth (Cognito).
- * Targeted against @aws-amplify/backend ~1.13 (2026-08) — re-check
- * https://docs.amplify.aws/react/build-a-backend/auth/ if the API has moved.
  *
- * Model:
- *  - Public site visitors are UNAUTHENTICATED. They never sign in. All
- *    citizen-facing reads (resources, bills, initiatives) use Amplify
- *    Data's public API-key auth mode — see amplify/data/resource.ts.
- *  - A small `admin` Cognito group is the only signed-in role. Admins
- *    edit the resource catalog, legislator/committee content, and
- *    review GuidedSession analytics. There is no citizen account system
- *    by design — the guided-help flow is explicitly anonymous (see
- *    project privacy requirements), so we do not collect end-user PII
- *    or offer end-user login.
+ * TWO KINDS OF SIGNED-IN USER, and a large anonymous majority:
+ *
+ *  - Anonymous visitors are still the default and the priority. Browsing
+ *    the directory, the guided-help wizard, and chat/voice all work with
+ *    no account, using Amplify Data's public API-key auth. Nothing about
+ *    the accounts below gates or degrades that path.
+ *  - Optional citizen accounts, used only to save services to come back
+ *    to. Username + password, with NO email or other personal detail
+ *    collected: `defineAuth` has no username option and a pool's
+ *    UsernameAttributes is immutable, so each username maps to a
+ *    synthetic address in the reserved `.invalid` TLD (see
+ *    src/lib/account/usernames.ts) and the pre-sign-up trigger
+ *    auto-confirms so no mail is ever attempted.
+ *  - A small `admin` group for staff who edit the catalog.
+ *
+ * CONSEQUENCE, by design: there is no password reset. Nothing can be sent
+ * to a `.invalid` address. The sign-up form states this plainly, and
+ * saved services are a convenience rather than a system of record.
  */
 export const auth = defineAuth({
   loginWith: {

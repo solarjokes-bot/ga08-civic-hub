@@ -14,6 +14,7 @@ import { eligibilityTagLabel } from "@/data/eligibilityTags";
 import { resourcesStrings as S, fmt } from "@/i18n/en/resources";
 import { CategoryBadge } from "@/components/resources/CategoryBadge";
 import { ResourceCard } from "@/components/resources/ResourceCard";
+import { SaveButton } from "@/components/account/SaveButton";
 
 function telHref(phone: string): string {
   return `tel:${phone.replace(/[^0-9+]/g, "")}`;
@@ -94,7 +95,8 @@ export default function ResourceDetail() {
       </header>
 
       {/* Primary actions */}
-      <div className="mt-5 flex flex-wrap gap-3">
+      <div className="mt-5 flex flex-wrap items-center gap-3">
+        <SaveButton slug={resource.slug} name={resource.name} className="px-5 py-3 text-base" />
         {resource.applicationUrl && (
           <a
             href={resource.applicationUrl}

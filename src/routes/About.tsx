@@ -34,9 +34,18 @@ export default function About() {
         <h2 className="text-xl font-bold text-ink-900">Your privacy</h2>
         <p>
           The guided help tool does not ask for your name, and you do not
-          need to create an account to search resources or use guided
-          help. We keep anonymous records of the questions the guide asks
-          (not who asked them) so we can improve it over time.
+          need to create an account to search resources, use guided help,
+          or chat with the guide. We keep anonymous records of the
+          questions the guide asks (not who asked them) so we can improve
+          it over time.
+        </p>
+        <p>
+          You can <strong>optionally</strong> create an account if you want
+          to save services and find them again later. An account needs only
+          a username and a password — we do not ask for your email address,
+          phone number, or real name, and your saved list is visible only to
+          you. Because we do not collect an email address, there is no way
+          to reset a forgotten password, so write it down somewhere safe.
         </p>
 
         <h2 className="text-xl font-bold text-ink-900">In a crisis</h2>

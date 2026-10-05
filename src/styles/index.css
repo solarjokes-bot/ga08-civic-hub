@@ -82,3 +82,10 @@
     @apply focus:rounded-md focus:bg-primary-600 focus:px-4 focus:py-2 focus:text-white;
   }
 }
+
+/* The /apply voice assistant marks the field it is asking about. */
+[data-voice-active="true"] {
+  outline: 3px solid var(--color-primary-600);
+  outline-offset: 3px;
+  border-radius: 0.5rem;
+}

@@ -1,6 +1,7 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 import { guidedTriage } from "../functions/guided-triage/resource";
 import { connectContact } from "../functions/connect-contact/resource";
+import { confirmAccount } from "../functions/confirm-account/resource";
 
 /**
  * Amplify Data (AppSync + DynamoDB) — Gen 2, code-first schema.
@@ -161,6 +162,29 @@ const schema = a.schema({
     ]),
 
   /**
+   * A service an account holder saved to come back to.
+   *
+   * Owner-scoped: `allow.owner()` means a row is readable and writable
+   * ONLY by the Cognito identity that created it. There is no public and
+   * no admin read — a saved list is nobody else's business, including
+   * ours.
+   *
+   * Deliberately thin. It stores a catalog slug, not a copy of the
+   * resource, so a saved item always reflects the currently verified
+   * details rather than a stale snapshot. Nothing here identifies the
+   * person: accounts carry a username and no email (see
+   * amplify/auth/resource.ts).
+   */
+  SavedService: a
+    .model({
+      /** Slug of a row in the Resource catalog. */
+      resourceSlug: a.string().required(),
+      /** Optional private note, e.g. "called them, waiting to hear back". */
+      note: a.string(),
+    })
+    .authorization((allow) => [allow.owner()]),
+
+  /**
    * AI Guided Help triage step (Phase 3). Anonymous — the flow collects
    * no account and no PII. Takes the answers gathered so far as JSON and
    * returns the next step (a question, a grounded shortlist, or a crisis
@@ -173,6 +197,20 @@ const schema = a.schema({
     .arguments({ answers: a.json() })
     .returns(a.json())
     .handler(a.handler.function(guidedTriage))
+    .authorization((allow) => [allow.publicApiKey()]),
+
+  /**
+   * Confirms a newly created username account (see
+   * amplify/functions/confirm-account/). Public API key, because it runs
+   * immediately after sign-up before any session exists. The handler
+   * refuses any identifier outside the synthetic `.invalid` domain, so it
+   * cannot be pointed at a staff account.
+   */
+  confirmAccount: a
+    .mutation()
+    .arguments({ identifier: a.string().required() })
+    .returns(a.json())
+    .handler(a.handler.function(confirmAccount))
     .authorization((allow) => [allow.publicApiKey()]),
 
   /**
