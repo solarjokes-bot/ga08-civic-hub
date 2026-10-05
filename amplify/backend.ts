@@ -1,5 +1,6 @@
 import { defineBackend } from "@aws-amplify/backend";
 import * as iam from "aws-cdk-lib/aws-iam";
+import type { CfnUserPool } from "aws-cdk-lib/aws-cognito";
 import { auth } from "./auth/resource";
 import { data } from "./data/resource";
 import { guidedTriage } from "./functions/guided-triage/resource";
@@ -100,17 +101,25 @@ const resourceTable = backend.data.resources.tables["Resource"];
   );
 }
 
+// ───────────────────────── auth: suppress Schema on update ─────────────────────────
+// The auth nested stack is part of every deploy regardless of whether
+// anything here references it, and CDK always serializes the full Cognito
+// `Schema` property into the UserPool's CloudFormation resource — even
+// when nothing about it changed. `UpdateUserPool` does not support
+// modifying standard-attribute Schema on an existing pool at all, so
+// CloudFormation gets "Invalid AttributeDataType" on *every* deploy, not
+// just ones that touch auth. `Schema` only matters at creation time, so
+// deleting it from the template means CloudFormation stops trying to set
+// it on updates and leaves the already-created pool's attributes alone.
+{
+  const cfnUserPool = backend.auth.resources.userPool.node
+    .defaultChild as CfnUserPool;
+  cfnUserPool.addPropertyDeletionOverride("Schema");
+}
+
 // ───────────────────────── confirm-account ─────────────────────────
 // Confirms new username accounts server-side (there is no email to send a
 // code to). Scoped to exactly one Cognito action on exactly this pool.
-//
-// IMPORTANT: the pool id comes from an environment variable, NOT from
-// `backend.auth.resources.userPool`. Referencing the auth construct here
-// creates a cross-stack dependency that forces the auth nested stack to
-// update, which makes CloudFormation re-emit the Cognito pool Schema —
-// and Cognito rejects that on an existing pool with "Invalid
-// AttributeDataType" (a known CDK issue: `updated_at` is emitted as
-// Number). Keeping the reference out leaves the auth stack untouched.
 {
   const fn = backend.confirmAccount.resources.lambda;
   const poolId = process.env.USER_POOL_ID ?? "";
