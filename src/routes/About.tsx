@@ -5,10 +5,15 @@ export default function About() {
 
       <div className="prose-block mt-6 space-y-4 text-ink-700">
         <p>
-          The Civic Resource Hub is a free, independent guide to public
+          Georgia AI Assistant is a free, independent guide to public
           and government resources for people living in Georgia. It helps
           you find services like food assistance, housing help, health
           care, veterans benefits, and more.
+        </p>
+
+        <p>
+          Built by Brian Ethan Haugabrook, a junior at Lowndes High School
+          in Valdosta, Georgia, for the 2026 Congressional App Challenge.
         </p>
 
         <p>

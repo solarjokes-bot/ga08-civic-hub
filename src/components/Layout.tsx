@@ -37,9 +37,9 @@ export function Layout() {
           >
             <span aria-hidden="true">🏛️</span>
             <span>
-              Civic Resource Hub
+              Georgia AI Assistant
               <span className="block text-xs font-normal text-ink-500">
-                Public and government services in Georgia
+                Apply for housing, food, utility and medical assistance
               </span>
             </span>
           </NavLink>

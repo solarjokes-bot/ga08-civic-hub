@@ -10,12 +10,11 @@ export default function Home() {
             Public and government services across Georgia
           </p>
           <h1 className="text-3xl font-bold leading-tight sm:text-5xl">
-            Find help. Fast, free, and in plain language.
+            Georgia AI Assistant
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-primary-50">
-            Search public and government resources across Georgia, or let
-            our guide ask a few quick questions and point you in the right
-            direction.
+            Apply for housing, food, utility and medical assistance. Talk or
+            chat with the assistant and watch the form fill itself in.
           </p>
 
           <div className="mt-8 flex flex-col justify-center gap-4 sm:flex-row">
@@ -39,6 +38,11 @@ export default function Home() {
               Chat or call our guide for free
             </Link>{" "}
             — no phone dialing required.
+          </p>
+
+          <p className="mt-4 text-xs text-primary-100">
+            Built by Brian Ethan Haugabrook, a junior at Lowndes High School
+            in Valdosta, Georgia, for the 2026 Congressional App Challenge.
           </p>
         </div>
       </section>
